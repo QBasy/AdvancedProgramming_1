@@ -1,8 +1,8 @@
-Project:
+# Project:
 
-Description:
+# Description:
 
-Made with ❤️ by Sayat Adilkhanov & Alikhan Dochshanov
+## Made with ❤️ by Sayat Adilkhanov & Alikhan Dochshanov
 
 ---
 
