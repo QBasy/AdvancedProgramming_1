@@ -19,10 +19,36 @@ type Database struct {
 }
 
 type User struct {
-	name  string
-	email string
+	name  string `json:"name"`
+	email string `json:"email"`
 }
 
+func (db Database) isInDatabase(user User) bool {
+	database, err := sql.Open("postgres", connection)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer database.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("EcTb KonTakT")
+
+	name, err := database.Query("SELECT name FROM users WHERE name = $1", user.name)
+
+	if name != nil {
+		return false
+	}
+
+	email, err := database.Query("SELECT email FROM users WHERE email = $1", user.email)
+
+	if email != nil {
+		return false
+	}
+
+	err = database.Ping()
+	return true
+}
 func (db Database) getUser(user User) {
 	query := "SELECT users.id, users.name, users.email FROM users WHERE users.name = " + user.name + " AND users.email = " + user.email + ";"
 	database, err := sql.Open("postgres", connection)
@@ -90,6 +116,8 @@ func (db Database) addUser() {
 		log.Fatal(err)
 	}
 	fmt.Println("EcTb KonTakT")
+
+	db.isInDatabase(User{db.name, db.email})
 
 	rows, err := database.Query(query)
 	if err != nil {

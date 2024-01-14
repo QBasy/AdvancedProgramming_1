@@ -50,7 +50,15 @@ func getLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func postLogin(w http.ResponseWriter, r *http.Request) {
+	var user User
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
+	db := Database{name: user.email, email: user.name}
+	db.getUser(user)
 }
 
 func postRegister(w http.ResponseWriter, r *http.Request) {
