@@ -12,7 +12,29 @@
         }
     </style>
     <script>
+        function registerUser() {
+            let name = document.getElementById("name");
+            let email = document.getElementById("email");
 
+            let requestBody = {
+                name: name,
+                email: email,
+            };
+
+            fetch('/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            }).then(response => response.json())
+                .then(data => {
+                    document.getElementById("response").innerHTML = data.message;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
     </script>
 </head>
 <body class="background">

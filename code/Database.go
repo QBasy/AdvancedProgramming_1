@@ -43,10 +43,10 @@ func (db Database) getUser(user User) {
 	}
 	defer rows.Close()
 
-	var people []User
+	var people []Database
 
 	for rows.Next() {
-		var user User
+		var user Database
 		err := rows.Scan(&user.name, &user.email)
 		if err != nil {
 			log.Fatal(err)
@@ -77,8 +77,8 @@ func (db Database) getUser(user User) {
 	fmt.Println("JSON data written, or written over old data to file.json")
 }
 
-func (db Database) addUser(user User) {
-	query := "INSERT INTO users (users.name, users.email) VALUES (" + user.name + ", " + user.email + ");"
+func (db Database) addUser() {
+	query := "INSERT INTO users (users.name, users.email) VALUES (" + db.name + ", " + db.email + ");"
 	database, err := sql.Open("postgres", connection)
 	if err != nil {
 		log.Fatal(err)

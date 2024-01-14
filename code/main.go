@@ -27,6 +27,12 @@ func main() {
 	http.HandleFunc("/notfound", get404)
 	http.HandleFunc("/notfound/", get404)
 
+	http.HandleFunc("/register", postRegister)
+	http.HandleFunc("/login", postLogin)
+
+	http.HandleFunc("/reg", getMain)
+	http.HandleFunc("/log", getLogin)
+
 	fmt.Printf("Server listening on port %s...\n", port)
 	http.ListenAndServe(port, nil)
 }
@@ -37,6 +43,10 @@ func get404(w http.ResponseWriter, r *http.Request) {
 
 func getMain(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "frontend/register.html")
+}
+
+func getLogin(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "frontend/login.html")
 }
 
 func postLogin(w http.ResponseWriter, r *http.Request) {
