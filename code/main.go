@@ -16,19 +16,35 @@ type Response struct {
 }
 
 const port = ":8888"
-const databaseStr = "user=postgres dbname=advanced sslmode=disable"
 
 func main() {
-	http.HandleFunc("/", getPostRequest)
+	http.HandleFunc("/", getMain)
+
+	http.Handle("/favicon.ico", http.NotFoundHandler())
+	http.HandleFunc("/404/", get404)
+	http.HandleFunc("/404", get404)
+
+	http.HandleFunc("/notfound", get404)
+	http.HandleFunc("/notfound/", get404)
+
 	fmt.Printf("Server listening on port %s...\n", port)
 	http.ListenAndServe(port, nil)
 }
 
-func getResponse(w http.ResponseWriter, r *http.Request) {
+func get404(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "frontend/404.html")
 }
 
 func getMain(w http.ResponseWriter, r *http.Request) {
-	w.Header()
+	http.ServeFile(w, r, "frontend/register.html")
+}
+
+func postLogin(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func postRegister(w http.ResponseWriter, r *http.Request) {
+
 }
 
 func getPostRequest(w http.ResponseWriter, r *http.Request) {
