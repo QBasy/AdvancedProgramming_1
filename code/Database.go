@@ -14,13 +14,13 @@ const connection = "host=localhost port=5432 user=postgres password=japierdole d
 
 type Database struct {
 	gorm.Model
-	name  string
-	email string
+	Name  string `json:"name"`
+	Email string `json:"email"`
 }
 
 type User struct {
-	name  string `json:"name"`
-	email string `json:"email"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
 }
 
 func (db Database) isInDatabase(user User) bool {
@@ -29,28 +29,25 @@ func (db Database) isInDatabase(user User) bool {
 		log.Fatal(err)
 	}
 	defer database.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
+
 	fmt.Println("EcTb KonTakT")
 
-	name, err := database.Query("SELECT name FROM users WHERE name = $1", user.name)
-
-	if name != nil {
+	nameRows, err := database.Query("SELECT name FROM users WHERE name = $1", user.Name)
+	if nameRows.Next() {
 		return false
 	}
 
-	email, err := database.Query("SELECT email FROM users WHERE email = $1", user.email)
-
-	if email != nil {
+	emailRows, err := database.Query("SELECT email FROM users WHERE email = $1", user.Email)
+	if emailRows.Next() {
 		return false
 	}
 
 	err = database.Ping()
 	return true
 }
+
 func (db Database) getUser(user User) {
-	query := "SELECT users.id, users.name, users.email FROM users WHERE users.name = " + user.name + " AND users.email = " + user.email + ";"
+	query := "SELECT id, name, email FROM users WHERE name = $1 AND email = $2;"
 	database, err := sql.Open("postgres", connection)
 	if err != nil {
 		log.Fatal(err)
@@ -63,7 +60,7 @@ func (db Database) getUser(user User) {
 	}
 	fmt.Println("EcTb KonTakT")
 
-	rows, err := database.Query(query)
+	rows, err := database.Query(query, user.Name, user.Email)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -73,7 +70,7 @@ func (db Database) getUser(user User) {
 
 	for rows.Next() {
 		var user Database
-		err := rows.Scan(&user.name, &user.email)
+		err := rows.Scan(&user.ID, &user.Name, &user.Email)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -104,7 +101,7 @@ func (db Database) getUser(user User) {
 }
 
 func (db Database) addUser() {
-	query := "INSERT INTO users (users.name, users.email) VALUES (" + db.name + ", " + db.email + ");"
+	query := "INSERT INTO users (name, email) VALUES ($1, $2);"
 	database, err := sql.Open("postgres", connection)
 	if err != nil {
 		log.Fatal(err)
@@ -117,11 +114,13 @@ func (db Database) addUser() {
 	}
 	fmt.Println("EcTb KonTakT")
 
-	db.isInDatabase(User{db.name, db.email})
+	if db.isInDatabase(User{db.Name, db.Email}) {
+		fmt.Println("User already exists.")
+		return
+	}
 
-	rows, err := database.Query(query)
+	_, err = database.Exec(query, db.Name, db.Email)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer rows.Close()
 }

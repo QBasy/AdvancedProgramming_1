@@ -13,8 +13,8 @@
     </style>
     <script>
         function login() {
-            let name = document.getElementById("name");
-            let email = document.getElementById("email");
+            let name = document.getElementById("name").value;
+            let email = document.getElementById("email").value;
 
             let requestBody = {
                 name: name,
@@ -63,6 +63,11 @@
             </form>
         </div>
         <div id="response"></div>
+    </center>
+    <center>
+        <div>
+            <button href="/login">I already Have account!</button>
+        </div>
     </center>
 </main>
 <footer>

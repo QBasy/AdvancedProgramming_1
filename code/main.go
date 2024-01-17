@@ -19,19 +19,14 @@ const port = ":8888"
 
 func main() {
 	http.HandleFunc("/", getMain)
-
+	http.HandleFunc("/login", getLogin)
 	http.Handle("/favicon.ico", http.NotFoundHandler())
 	http.HandleFunc("/404/", get404)
 	http.HandleFunc("/404", get404)
-
 	http.HandleFunc("/notfound", get404)
 	http.HandleFunc("/notfound/", get404)
-
-	http.HandleFunc("/register", postRegister)
-	http.HandleFunc("/login", postLogin)
-
-	http.HandleFunc("/reg", getMain)
-	http.HandleFunc("/log", getLogin)
+	http.HandleFunc("/reg", postRegister)
+	http.HandleFunc("/log", postLogin)
 
 	fmt.Printf("Server listening on port %s...\n", port)
 	http.ListenAndServe(port, nil)
@@ -57,12 +52,38 @@ func postLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db := Database{name: user.email, email: user.name}
+	db := Database{}
 	db.getUser(user)
+
+	response := Response{
+		Status:  "success",
+		Message: "Login successful",
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 }
 
 func postRegister(w http.ResponseWriter, r *http.Request) {
+	var user User
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
+	db := Database{Name: user.Name, Email: user.Email}
+	db.addUser()
+
+	response := Response{
+		Status:  "success",
+		Message: "Registration successful",
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+
+	fmt.Println("User Registered")
 }
 
 func getPostRequest(w http.ResponseWriter, r *http.Request) {
