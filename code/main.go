@@ -19,6 +19,7 @@ const port = ":8888"
 
 func main() {
 	http.HandleFunc("/", getMain)
+	http.HandleFunc("/register", getMain)
 	http.HandleFunc("/login", getLogin)
 	http.Handle("/favicon.ico", http.NotFoundHandler())
 	http.HandleFunc("/404/", get404)
