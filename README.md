@@ -2,7 +2,7 @@
 
 # Description:
 
-## Made with ❤️ by Sayat Adilkhanov & Alikhan Dochshanov
+## Made with ❤️ by Sayat Adilkhanov. Dastan Zhumagali & Alikhan Dochshanov.
 
 ---
 
