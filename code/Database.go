@@ -1,5 +1,6 @@
 package main
 
+/*
 import (
 	"database/sql"
 	"encoding/json"
@@ -123,4 +124,4 @@ func (db Database) addUser() {
 	if err != nil {
 		log.Fatal(err)
 	}
-}
+}*/

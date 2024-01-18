@@ -3,11 +3,23 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"log"
 	"net/http"
+	"time"
 )
 
-type Request struct {
-	Message string `json:"message"`
+const port = ":8888"
+
+var db *gorm.DB
+
+type User struct {
+	gorm.Model
+	Name      string    `json:"name"`
+	Email     string    `json:"email"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type Response struct {
@@ -15,24 +27,32 @@ type Response struct {
 	Message string `json:"message"`
 }
 
-const port = ":8888"
+func init() {
+	dsn := "host=localhost port=5432 user=postgres password=japierdole dbname=advanced sslmode=disable"
+	var err error
+	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = db.AutoMigrate(&User{})
+}
 
 func main() {
+
 	http.HandleFunc("/", getMain)
-	http.HandleFunc("/register", getMain)
-	http.HandleFunc("/login", getLogin)
-	http.Handle("/favicon.ico", http.NotFoundHandler())
-	http.HandleFunc("/404/", get404)
+	http.HandleFunc("/log", getLogin)
+	http.HandleFunc("/register", postRegister)
 	http.HandleFunc("/404", get404)
-	http.HandleFunc("/notfound", get404)
-	http.HandleFunc("/notfound/", get404)
-	http.HandleFunc("/reg", postRegister)
-	http.HandleFunc("/log", postLogin)
+	http.HandleFunc("/login", postLogin)
 	http.HandleFunc("/success", getSuccess)
 	http.HandleFunc("/registered", getRegistered)
 
 	fmt.Printf("Server listening on port %s...\n", port)
-	http.ListenAndServe(port, nil)
+	err := http.ListenAndServe(port, nil)
+	if err != nil {
+		return
+	}
 }
 
 func get404(w http.ResponseWriter, r *http.Request) {
@@ -59,54 +79,72 @@ func postLogin(w http.ResponseWriter, r *http.Request) {
 	var user User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		respondWithError(w, http.StatusBadRequest, "Invalid JSON format")
 		return
 	}
 
-	db := Database{}
-	db.getUser(user)
+	db.First(&user, "name = ? AND email = ?", user.Name, user.Email)
+
+	if user.ID == 0 {
+		respondWithError(w, http.StatusNotFound, "User not found")
+		return
+	}
 
 	response := Response{
 		Status:  "success",
 		Message: "Login successful",
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	respondWithJSON(w, http.StatusOK, response)
 }
 
 func postRegister(w http.ResponseWriter, r *http.Request) {
 	var user User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		respondWithError(w, http.StatusBadRequest, "Invalid JSON format")
 		return
 	}
 
-	db := Database{Name: user.Name, Password: user.Password}
-	db.addUser()
+	if !isUserInDatabase(user) {
+		respondWithError(w, http.StatusBadRequest, "User already exists")
+		return
+	}
+
+	db.Create(&user)
 
 	response := Response{
 		Status:  "success",
 		Message: "Registration successful",
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
-
-	fmt.Println("User Registered")
+	respondWithJSON(w, http.StatusOK, response)
 }
 
-func getPostRequest(w http.ResponseWriter, r *http.Request) {
-	var request Request
+func isUserInDatabase(user User) bool {
+	var existingUser User
+	result := db.First(&existingUser, "name = ? OR email = ?", user.Name, user.Email)
 
-	fmt.Printf("message: %s\n", request.Message)
+	return result.RowsAffected == 0
+}
 
+func respondWithError(w http.ResponseWriter, code int, message string) {
 	response := Response{
-		Status:  "success",
-		Message: "Data successfully received",
+		Status:  fmt.Sprint(code),
+		Message: message,
 	}
+	respondWithJSON(w, code, response)
+}
+
+func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
+	response, err := json.Marshal(payload)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	w.WriteHeader(code)
+	_, err = w.Write(response)
+	if err != nil {
+		return
+	}
 }
