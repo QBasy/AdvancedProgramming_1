@@ -27,13 +27,29 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(requestBody)
-            }).then(response => response.json())
+            })
+                .then(response => {
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                    } else if (!response.ok) {
+                        if (response.status === 401) {
+                            document.getElementById("response").innerHTML = "Invalid login credentials";
+                            alert("Invalid login credentials");
+                        } else {
+                            console.error('Error:', response.status, response.statusText);
+                            document.getElementById("response").innerHTML = "An error occurred during registration.";
+                        }
+                        throw new Error('Registration failed');
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     document.getElementById("response").innerHTML = data.message;
                 })
                 .catch(error => {
                     console.error('Error:', error);
                 });
+
         }
     </script>
 </head>
@@ -54,7 +70,7 @@
 
             <br><br>
 
-            <label for="password">Email:</label>
+            <label for="password">Password:</label>
             <input type="password" id="password" name="password" required>
 
             <br><br>

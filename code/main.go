@@ -7,7 +7,6 @@ import (
 	"gorm.io/gorm"
 	"log"
 	"net/http"
-	"time"
 )
 
 const port = ":8888"
@@ -16,10 +15,8 @@ var db *gorm.DB
 
 type User struct {
 	gorm.Model
-	Name      string    `json:"name"`
-	Email     string    `json:"email"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Name     string `json:"name"`
+	Password string `json:"password"`
 }
 
 type Response struct {
@@ -36,14 +33,17 @@ func init() {
 	}
 
 	err = db.AutoMigrate(&User{})
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func main() {
-
 	http.HandleFunc("/", getMain)
 	http.HandleFunc("/log", getLogin)
 	http.HandleFunc("/register", postRegister)
-	http.HandleFunc("/404", get404)
+	http.HandleFunc("/notfound", get404)
+	http.HandleFunc("/notfound/", get404)
 	http.HandleFunc("/login", postLogin)
 	http.HandleFunc("/success", getSuccess)
 	http.HandleFunc("/registered", getRegistered)
@@ -83,7 +83,7 @@ func postLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db.First(&user, "name = ? AND email = ?", user.Name, user.Email)
+	db.First(&user, "name = ? AND password = ?", user.Name, user.Password)
 
 	if user.ID == 0 {
 		respondWithError(w, http.StatusNotFound, "User not found")
@@ -106,22 +106,22 @@ func postRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !isUserInDatabase(user) {
-		respondWithError(w, http.StatusBadRequest, "User already exists")
+		handle404(w, r)
 		return
 	}
 
 	db.Create(&user)
 
-	response := Response{
-		Status:  "success",
-		Message: "Registration successful",
-	}
-	respondWithJSON(w, http.StatusOK, response)
+	http.Redirect(w, r, "/registered", http.StatusFound)
+}
+
+func handle404(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "frontend/404.html")
 }
 
 func isUserInDatabase(user User) bool {
 	var existingUser User
-	result := db.First(&existingUser, "name = ? OR email = ?", user.Name, user.Email)
+	result := db.First(&existingUser, "name = ? OR password = ?", user.Name, user.Password)
 
 	return result.RowsAffected == 0
 }

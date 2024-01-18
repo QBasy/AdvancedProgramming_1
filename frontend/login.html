@@ -27,13 +27,30 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(requestBody)
-            }).then(response => response.json())
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        if (response.status === 409) {
+                            document.getElementById("response").innerHTML = "Please register.";
+                            alert("User already does not exist.");
+                        } else {
+                            console.error('Error:', response.status, response.statusText);
+                        }
+                        throw new Error('Login failed');
+                    }
+                    return response.json();
+                })
                 .then(data => {
-                    document.getElementById("response").innerHTML = data.message;
+                    if (data.status === 'success') {
+                        window.location.href = "/success";
+                    } else {
+                        document.getElementById("response").innerHTML = data.message;
+                    }
                 })
                 .catch(error => {
                     console.error('Error:', error);
                 });
+
         }
     </script>
 </head>
@@ -54,7 +71,7 @@
 
                 <br><br>
 
-                <label for="password">Email:</label>
+                <label for="password">Password:</label>
                 <input type="password" id="password" name="password" required>
 
                 <br><br>
