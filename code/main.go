@@ -28,6 +28,8 @@ func main() {
 	http.HandleFunc("/notfound/", get404)
 	http.HandleFunc("/reg", postRegister)
 	http.HandleFunc("/log", postLogin)
+	http.HandleFunc("/success", getSuccess)
+	http.HandleFunc("/registered", getRegistered)
 
 	fmt.Printf("Server listening on port %s...\n", port)
 	http.ListenAndServe(port, nil)
@@ -35,6 +37,14 @@ func main() {
 
 func get404(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "frontend/404.html")
+}
+
+func getRegistered(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "frontend/registered.html")
+}
+
+func getSuccess(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "frontend/success.html")
 }
 
 func getMain(w http.ResponseWriter, r *http.Request) {
@@ -73,7 +83,7 @@ func postRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db := Database{Name: user.Name, Email: user.Email}
+	db := Database{Name: user.Name, Password: user.Password}
 	db.addUser()
 
 	response := Response{

@@ -14,13 +14,13 @@ const connection = "host=localhost port=5432 user=postgres password=japierdole d
 
 type Database struct {
 	gorm.Model
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	Name     string `json:"name"`
+	Password string `json:"password"`
 }
 
 type User struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	Name     string `json:"name"`
+	Password string `json:"password"`
 }
 
 func (db Database) isInDatabase(user User) bool {
@@ -32,12 +32,12 @@ func (db Database) isInDatabase(user User) bool {
 
 	fmt.Println("EcTb KonTakT")
 
-	nameRows, err := database.Query("SELECT name FROM users WHERE name = $1", user.Name)
+	nameRows, err := database.Query("SELECT password FROM users WHERE password = $1", user.Name)
 	if nameRows.Next() {
 		return false
 	}
 
-	emailRows, err := database.Query("SELECT email FROM users WHERE email = $1", user.Email)
+	emailRows, err := database.Query("SELECT password FROM users WHERE password = $1", user.Password)
 	if emailRows.Next() {
 		return false
 	}
@@ -47,7 +47,7 @@ func (db Database) isInDatabase(user User) bool {
 }
 
 func (db Database) getUser(user User) {
-	query := "SELECT id, name, email FROM users WHERE name = $1 AND email = $2;"
+	query := "SELECT id, name, password FROM users WHERE name = $1 AND password = $2;"
 	database, err := sql.Open("postgres", connection)
 	if err != nil {
 		log.Fatal(err)
@@ -60,7 +60,7 @@ func (db Database) getUser(user User) {
 	}
 	fmt.Println("EcTb KonTakT")
 
-	rows, err := database.Query(query, user.Name, user.Email)
+	rows, err := database.Query(query, user.Name, user.Password)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -70,7 +70,7 @@ func (db Database) getUser(user User) {
 
 	for rows.Next() {
 		var user Database
-		err := rows.Scan(&user.ID, &user.Name, &user.Email)
+		err := rows.Scan(&user.ID, &user.Name, &user.Password)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -114,12 +114,12 @@ func (db Database) addUser() {
 	}
 	fmt.Println("EcTb KonTakT")
 
-	if db.isInDatabase(User{db.Name, db.Email}) {
+	if db.isInDatabase(User{db.Name, db.Password}) {
 		fmt.Println("User already exists.")
 		return
 	}
 
-	_, err = database.Exec(query, db.Name, db.Email)
+	_, err = database.Exec(query, db.Name, db.Password)
 	if err != nil {
 		log.Fatal(err)
 	}

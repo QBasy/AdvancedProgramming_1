@@ -14,11 +14,11 @@
     <script>
         function registerUser() {
             let name = document.getElementById("name").value;
-            let email = document.getElementById("email").value;
+            let password = document.getElementById("password").value;
 
             let requestBody = {
                 name: name,
-                email: email,
+                password: password,
             };
 
             fetch('/register', {
@@ -54,8 +54,8 @@
 
             <br><br>
 
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" required>
+            <label for="password">Email:</label>
+            <input type="password" id="password" name="password" required>
 
             <br><br>
 
@@ -67,7 +67,7 @@
     <br><br>
     <center>
         <div>
-            <button href="/login">I already Have account!</button>
+            <a href="/login"><button>I already Have account!</button></a>
         </div>
     </center>
 </main>
