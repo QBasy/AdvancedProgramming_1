@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>filter</title>
+    <link rel="icon" type="image/x-icon" href="img/favicon-32x32.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://kit.fontawesome.com/f5c7d6a886.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css">
+    <link href="css/styles.css" rel="stylesheet" type="text/css">
+    <script>
+        async function groupColumns() {
+            let container = document.getElementById("cardContainer");
+            let row = container.getElementsByClassName("row");
+
+            for (let i = 0; i < row.length; i += 3) {
+                let newCol = document.createElement("div");
+                newCol.className = "col-md-4";
+
+                for (let j = 0; j < 3 && i + j < row.length; j++) {
+                    container.appendChild("br")
+                    container.appendChild("br")
+                    container.appendChild("br")
+
+                    newCol.appendChild(row[i + j]);
+                }
+                container.appendChild(newCol);
+
+                if (i + 3 < row.length) {
+                    let lineBreak = document.createElement("br");
+                    container.appendChild(lineBreak);
+                    container.appendChild(lineBreak);
+                }
+            }
+        }
+        async function refresh() {
+            let container = document.getElementById("cardContainer");
+            container.innerHTML = "";
+
+            postMessage('/refresh');
+            try {
+                const response = await fetch('savedCards.json');
+                const jsonData = await response.json();
+
+                let currentRow;
+
+                let i = 0;
+                for (let key in jsonData) {
+                    if (jsonData.hasOwnProperty(key)) {
+                        let video = jsonData[key];
+                        let cardElement = createCard(video, i);
+
+                        console.log("Data for Video #" + video.name + ":", video);
+
+                        let column = document.createElement("div");
+                        column.className = "col-md-4";
+                        column.appendChild(cardElement);
+
+                        if (!currentRow || currentRow.children.length === 3) {
+                            currentRow = document.createElement("div");
+                            currentRow.className = "row";
+                            container.appendChild(currentRow);
+                        }
+
+                        currentRow.appendChild(column);
+                    }
+                    i++;
+                }
+            } catch (error) {
+                console.error('Error fetching or parsing JSON:', error);
+            }
+        }
+        async function findBy() {
+            const name = document.getElementById('nameID').value;
+            const views = document.getElementById('viewsID').value;
+
+
+            try {
+                const response = await fetch('/filter', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name,
+                        views,
+                    }),
+                });
+            } catch (error) {
+                console.error('Error fetching or parsing JSON:', error);
+            }
+        }
+    </script>
+</head>
+
+<body>
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container px-4 px-lg-5"><a class="navbar-brand" href="/" id="name">FlickFusion</a><button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+        <div
+                class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+                <li class="nav-item"><a class="nav-link active" aria-current="page" href="/">Home</a></li>
+                <li class="nav-item dropdown"><a class="nav-link dropdown-toggle" id="navbarDropdownWatch" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Watch</a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdownWatch">
+                        <li><a class="dropdown-item" href="#">Movies</a></li>
+                        <li><a class="dropdown-item" href="#">Series</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" href="#">Videos</a></li>
+                        <li><a class="dropdown-item" href="#">Memes</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item"><a class="nav-link" href="/feedback">Feedback</a></li>
+            </ul>
+
+            <div class="dropdown">
+                <form class="d-flex">
+                    <button class="btn btn-outline-dark" type="button" id="accountDropdownBtn">
+                        <i class="fa-solid fa-user"></i> Account
+                    </button>
+                </form>
+                <ul class="dropdown-menu" id="accountDropdownMenu">
+                    <li><a class="dropdown-item" href="#">My Content</a></li>
+                    <li><a class="dropdown-item" href="#">Add Content</a></li>
+                    <li><a class="dropdown-item" href="#">Liked</a></li>
+                    <li><a class="dropdown-item" href="#">Bookmarks</a></li>
+                    <li><a class="dropdown-item" href="#">Edit Profile</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#">Log Out</a></li>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+</nav>
+
+<!-- Header -->
+<header class="bg-dark py-5">
+    <div class="container px-4 px-lg-5 my-5">
+        <div class="text-center text-white">
+            <h1 class="display-4 fw-bolder" data-aos="fade-right" data-aos-duration="900" data-aos-delay="200">Watch with pleasure</h1>
+            <p class="lead fw-normal text-50 mb-0" data-aos="fade-left" data-aos-duration="900" data-aos-delay="400">In this Comfortable Space</p>
+        </div>
+    </div>
+</header>
+
+<!-- Video Section -->
+<section class="py-5">
+    <div class="container px-4 px-lg-5 mt-5">
+        <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
+            <div class="col mb-5">
+                <div class="card h-100">
+                    <img class="card-img-top" src="https://dummyimage.com/450x300/dee2e6/6c757d.jpg" alt="...">
+                    <div class="card-body p-4">
+                        <div>
+                            <h5 class="fw-bolder">Jujutsu Kaisen S1EP2</h5>
+                            <h6>megaTerminator228</h6>
+                            <p class="text-end mb-0">2 weeks ago</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col mb-5">
+                <div class="card h-100">
+                    <img class="card-img-top" src="https://dummyimage.com/450x300/dee2e6/6c757d.jpg" alt="...">
+                    <div class="card-body p-4">
+                        <div>
+                            <h5 class="fw-bolder">Interstellar</h5>
+                            <h6>moviePirate1337</h6>
+                            <p class="text-end mb-0">5 days ago</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col mb-5">
+                <div class="card h-100">
+                    <img class="card-img-top" src="https://dummyimage.com/450x300/dee2e6/6c757d.jpg" alt="...">
+                    <div class="card-body p-4">
+                        <div>
+                            <h5 class="fw-bolder">Markiplier on FlickFusion???</h5>
+                            <h6>Markiplier</h6>
+                            <p class="text-end mb-0">3 weeks ago</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col mb-5">
+                <div class="card h-100">
+                    <img class="card-img-top" src="https://dummyimage.com/450x300/dee2e6/6c757d.jpg" alt="...">
+                    <div class="card-body p-4">
+                        <div>
+                            <h5 class="fw-bolder">TOP 50 ANIME</h5>
+                            <h6>ANIMELOVER</h6>
+                            <p class="text-end mb-0">1 day ago</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Footer-->
+<footer class="py-5 bg-dark">
+    <div class="container">
+        <p class="m-0 text-center text-white">Copyright &copy; FlickFusion 2023</p>
+    </div>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/scripts.js"></script>
+<script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script>
+    AOS.init();
+</script>
+</body>
+
+</html>

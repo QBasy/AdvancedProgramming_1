@@ -1,0 +1,10 @@
+{
+    "configurations": [
+        {
+            "type": "go",
+            "name": "Go configuration",
+            "goExecPath": "Q:/Codes/Golang/AdvancedProgramming_1/code/main.go",
+            "buildParams": [],
+        },
+    ]
+}

@@ -1,0 +1,23 @@
+#accountDropdownMenu {
+  display: none;
+  position: absolute;
+  z-index: 1;
+}
+
+#accountDropdownMenu.show {
+  display: block;
+}
+
+@font-face {
+  font-family: 'angelina';
+  src: url('../fonts/angelina/angelina-rnla-webfont.woff2') format('woff2'),
+  url('../fonts/angelina/angelina-rnla-webfont.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+#name {
+  font-family: "angelina", sans-serif;
+  font-size: 30px;
+}
+

@@ -51,14 +51,20 @@ func init() {
 }
 
 func main() {
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("frontend/"))))
+
 	http.HandleFunc("/", getMain)
+	http.HandleFunc("/index", getIndex)
 	http.HandleFunc("/log", getLogin)
-	http.HandleFunc("/register", postRegister)
+	http.HandleFunc("/register", getRegister)
+	http.HandleFunc("/createUser", postRegister)
 	http.HandleFunc("/notfound", get404)
 	http.HandleFunc("/notfound/", get404)
-	http.HandleFunc("/login", postLogin)
+	http.HandleFunc("/login", getLogin)
+	http.HandleFunc("/postLogin", postLogin)
 	http.HandleFunc("/profile", getProfile)
 	http.HandleFunc("/registered", getRegistered)
+	http.HandleFunc("/forgot", getForget)
 	http.HandleFunc("/filter", postFilter)
 
 	fmt.Printf("Server listening on port %s...\n", port)
@@ -66,6 +72,14 @@ func main() {
 	if err != nil {
 		return
 	}
+}
+
+func getIndex(w http.ResponseWriter, r *http.Request) {
+	if !limiter.Allow() {
+		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+		return
+	}
+	http.ServeFile(w, r, "frontend/index.html")
 }
 
 func get404(w http.ResponseWriter, r *http.Request) {
@@ -93,6 +107,22 @@ func getProfile(w http.ResponseWriter, r *http.Request) {
 }
 
 func getMain(w http.ResponseWriter, r *http.Request) {
+	if !limiter.Allow() {
+		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+		return
+	}
+	http.ServeFile(w, r, "frontend/starter.html")
+}
+
+func getForget(w http.ResponseWriter, r *http.Request) {
+	if !limiter.Allow() {
+		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+		return
+	}
+	http.ServeFile(w, r, "frontend/forgot.html")
+}
+
+func getRegister(w http.ResponseWriter, r *http.Request) {
 	if !limiter.Allow() {
 		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
 		return
@@ -167,6 +197,24 @@ func isUserInDatabase(user User) bool {
 	return result.RowsAffected == 0
 }
 
+func addVideoByUser(w http.ResponseWriter, r *http.Request) {
+	if !limiter.Allow() {
+		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+		return
+	}
+
+	var video Video
+
+	err := json.NewDecoder(r.Body).Decode(&video)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid JSON format")
+		return
+	}
+	db.Create(&video)
+
+	http.Redirect(w, r, "/index", http.StatusFound)
+}
+
 func respondWithError(w http.ResponseWriter, code int, message string) {
 	response := Response{
 		Status:  fmt.Sprint(code),
@@ -190,7 +238,19 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	}
 }
 
+func getFilter(w http.ResponseWriter, r *http.Request) {
+	if !limiter.Allow() {
+		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+		return
+	}
+
+	http.ServeFile(w, r, "/frontend/filter.html")
+}
 func postFilter(w http.ResponseWriter, r *http.Request) {
+	if !limiter.Allow() {
+		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+		return
+	}
 	filter := r.URL.Query().Get("filter")
 	sort := r.URL.Query().Get("sort")
 
@@ -201,11 +261,12 @@ func postFilter(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := "SELECT * FROM Video"
+	query := "SELECT * FROM video"
 
 	if filter != "" {
 		query += " WHERE name LIKE '%" + filter + "%'"
 	}
+
 	if sort != "" {
 		query += " ORDER BY " + sort
 	}
