@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/html">
 <head>
     <meta charset="UTF-8">
     <title>filter</title>
@@ -9,97 +9,13 @@
     <script src="https://kit.fontawesome.com/f5c7d6a886.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css">
     <link href="css/styles.css" rel="stylesheet" type="text/css">
-    <script>
-        async function groupColumns() {
-            let container = document.getElementById("cardContainer");
-            let row = container.getElementsByClassName("row");
-
-            for (let i = 0; i < row.length; i += 3) {
-                let newCol = document.createElement("div");
-                newCol.className = "col-md-4";
-
-                for (let j = 0; j < 3 && i + j < row.length; j++) {
-                    container.appendChild("br")
-                    container.appendChild("br")
-                    container.appendChild("br")
-
-                    newCol.appendChild(row[i + j]);
-                }
-                container.appendChild(newCol);
-
-                if (i + 3 < row.length) {
-                    let lineBreak = document.createElement("br");
-                    container.appendChild(lineBreak);
-                    container.appendChild(lineBreak);
-                }
-            }
-        }
-        async function refresh() {
-            let container = document.getElementById("cardContainer");
-            container.innerHTML = "";
-
-            postMessage('/refresh');
-            try {
-                const response = await fetch('savedCards.json');
-                const jsonData = await response.json();
-
-                let currentRow;
-
-                let i = 0;
-                for (let key in jsonData) {
-                    if (jsonData.hasOwnProperty(key)) {
-                        let video = jsonData[key];
-                        let cardElement = createCard(video, i);
-
-                        console.log("Data for Video #" + video.name + ":", video);
-
-                        let column = document.createElement("div");
-                        column.className = "col-md-4";
-                        column.appendChild(cardElement);
-
-                        if (!currentRow || currentRow.children.length === 3) {
-                            currentRow = document.createElement("div");
-                            currentRow.className = "row";
-                            container.appendChild(currentRow);
-                        }
-
-                        currentRow.appendChild(column);
-                    }
-                    i++;
-                }
-            } catch (error) {
-                console.error('Error fetching or parsing JSON:', error);
-            }
-        }
-        async function findBy() {
-            const name = document.getElementById('nameID').value;
-            const views = document.getElementById('viewsID').value;
-
-
-            try {
-                const response = await fetch('/filter', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        name,
-                        views,
-                    }),
-                });
-            } catch (error) {
-                console.error('Error fetching or parsing JSON:', error);
-            }
-        }
-    </script>
 </head>
 
 <body>
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="container px-4 px-lg-5"><a class="navbar-brand" href="/" id="name">FlickFusion</a><button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
-        <div
-                class="collapse navbar-collapse" id="navbarSupportedContent">
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
                 <li class="nav-item"><a class="nav-link active" aria-current="page" href="/">Home</a></li>
                 <li class="nav-item dropdown"><a class="nav-link dropdown-toggle" id="navbarDropdownWatch" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Watch</a>
@@ -114,6 +30,7 @@
                     </ul>
                 </li>
                 <li class="nav-item"><a class="nav-link" href="/feedback">Feedback</a></li>
+                <li class="nav-item"><a class="nav-link" href="/addVideo">VideoAdder</a></li>
             </ul>
 
             <div class="dropdown">
@@ -147,58 +64,46 @@
     </div>
 </header>
 
+<div class="container bg-light row">
+    <div class="col-lg-4 d-flex align-items-center">
+        <div class="row">
+            <div class="col-lg-3 ps-3 pt-2">
+                <label>Video Name</label>
+            </div>
+            <div class="col-lg-9">
+                <label class="pt-1">
+                    <input class="form-control px-2" max="500" min="0" placeholder="..."  value="" id="VideoNameID">
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 d-flex align-items-center">
+        <div class="row">
+            <div class="col-lg-3 ps-3 pt-2">
+                <label>Author</label>
+            </div>
+            <div class="col-lg-9">
+                <label class="pt-1">
+                    <input class="form-control px-2" max="500" min="0" placeholder="..."  value="" id="AuthorID">
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 d-flex align-items-center mt-3">
+        <div class="col-lg-1">
+        </div>
+        <div class="col-lg-3">
+            <a class="btn btn-primary" id="Search">Search</a>
+        </div>
+    </div>
+</div>
 <!-- Video Section -->
 <section class="py-5">
     <div class="container px-4 px-lg-5 mt-5">
         <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
-            <div class="col mb-5">
-                <div class="card h-100">
-                    <img class="card-img-top" src="https://dummyimage.com/450x300/dee2e6/6c757d.jpg" alt="...">
-                    <div class="card-body p-4">
-                        <div>
-                            <h5 class="fw-bolder">Jujutsu Kaisen S1EP2</h5>
-                            <h6>megaTerminator228</h6>
-                            <p class="text-end mb-0">2 weeks ago</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col mb-5">
-                <div class="card h-100">
-                    <img class="card-img-top" src="https://dummyimage.com/450x300/dee2e6/6c757d.jpg" alt="...">
-                    <div class="card-body p-4">
-                        <div>
-                            <h5 class="fw-bolder">Interstellar</h5>
-                            <h6>moviePirate1337</h6>
-                            <p class="text-end mb-0">5 days ago</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col mb-5">
-                <div class="card h-100">
-                    <img class="card-img-top" src="https://dummyimage.com/450x300/dee2e6/6c757d.jpg" alt="...">
-                    <div class="card-body p-4">
-                        <div>
-                            <h5 class="fw-bolder">Markiplier on FlickFusion???</h5>
-                            <h6>Markiplier</h6>
-                            <p class="text-end mb-0">3 weeks ago</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col mb-5">
-                <div class="card h-100">
-                    <img class="card-img-top" src="https://dummyimage.com/450x300/dee2e6/6c757d.jpg" alt="...">
-                    <div class="card-body p-4">
-                        <div>
-                            <h5 class="fw-bolder">TOP 50 ANIME</h5>
-                            <h6>ANIMELOVER</h6>
-                            <p class="text-end mb-0">1 day ago</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+
         </div>
     </div>
 </section>
@@ -213,6 +118,126 @@
 <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
 <script>
     AOS.init();
+</script>
+<script>
+    const cardsPerPage = 12;
+    let currentPage = 1;
+
+    const title = document.getElementById('VideoNameID') ? document.getElementById('VideoNameID').value : "";
+    const author = document.getElementById('AuthorID') ? document.getElementById('AuthorID').value : "";
+
+    let filter = {
+        title,
+        author,
+    };
+
+    async function fetchData() {
+        try {
+            const response = await fetch('/postFilter', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(filter)
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch data');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        }
+    }
+
+    async function initialize() {
+        const jsonData = await fetchData();
+        showPage(currentPage, jsonData);
+    }
+
+    function showPage(pageNumber, jsonData) {
+        if (!jsonData) {
+            console.error('jsonData is not available yet');
+            return;
+        }
+
+        const start = (pageNumber - 1) * cardsPerPage;
+        const end = pageNumber * cardsPerPage;
+        const pageCards = jsonData.slice(start, end);
+
+        const section = document.querySelector('.py-5 .container .row');
+        section.innerHTML = '';
+        pageCards.forEach(cardData => {
+            const card = createCard(cardData.name, cardData.author, cardData.date, cardData.imagepath);
+            section.appendChild(card);
+        });
+
+        const pageSelector = document.querySelector('.page-selector');
+        if (pageSelector) {
+            pageSelector.remove();
+        }
+        if (Math.ceil(jsonData.length / cardsPerPage) > 1) {
+            section.parentElement.appendChild(createPageSelector(Math.ceil(jsonData.length / cardsPerPage)));
+        }
+    }
+
+    function createPageSelector(totalPages) {
+        const pageSelector = document.createElement('div');
+        pageSelector.classList.add('page-selector');
+        for (let i = 1; i <= totalPages; i++) {
+            const pageButton = document.createElement('button');
+            pageButton.textContent = i;
+            pageButton.addEventListener('click', () => {
+                showPage(i);
+            });
+            pageSelector.appendChild(pageButton);
+        }
+        return pageSelector;
+    }
+
+    function createCard(title, author, date, imageURL) {
+        const col = document.createElement('div');
+        col.classList.add('col', 'mb-5');
+
+        const card = document.createElement('div');
+        card.classList.add('card', 'h-100');
+
+        const img = document.createElement('img');
+        img.classList.add('card-img-top');
+        img.src = imageURL;
+        img.alt = title;
+
+        const cardBody = document.createElement('div');
+        cardBody.classList.add('card-body', 'p-4');
+
+        const cardTitle = document.createElement('h5');
+        cardTitle.classList.add('fw-bolder');
+        cardTitle.textContent = title;
+
+        const cardSubtitle = document.createElement('h6');
+        cardSubtitle.textContent = author;
+
+        const cardDate = document.createElement('p');
+        cardDate.classList.add('text-end', 'mb-0');
+        cardDate.textContent = date;
+
+        cardBody.appendChild(cardTitle);
+        cardBody.appendChild(cardSubtitle);
+        cardBody.appendChild(cardDate);
+
+        card.appendChild(img);
+        card.appendChild(cardBody);
+
+        col.appendChild(card);
+
+        return col;
+    }
+
+    document.addEventListener('DOMContentLoaded', initialize);
+    document.getElementById('Search').addEventListener("click", async () => {
+        await initialize();
+    });
 </script>
 </body>
 

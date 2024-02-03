@@ -9,32 +9,6 @@
     <script src="https://kit.fontawesome.com/f5c7d6a886.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css">
     <link href="css/register.css" rel="stylesheet" type="text/css">
-    <script>
-        function addVideo() {
-            const videoName = document.getElementById('name').value;
-            const path = document.getElementById('path').value;
-            const user = document.getElementById('user').value;
-
-            let requestBody = {
-                name: videoName,
-                likes: 0,
-                views: 0,
-                comments: 0,
-                path: path
-            }
-            try {
-                fetch('/addVideo', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(requestBody)
-                })
-            } catch (e) {
-                console.log('Error: ', e);
-            }
-        }
-    </script>
 </head>
 <body class="background">
 <main>

@@ -27,13 +27,16 @@ type Response struct {
 	Message string `json:"message"`
 }
 
-type Video struct {
+type Videos struct {
 	gorm.Model
-	Name     string `json:"name"`
-	Likes    string `json:"likes"`
-	Views    string `json:"views"`
-	Comments string `json:"comments"`
-	Path     string `json:"path"`
+	Name      string `json:"title"`
+	Author    string `json:"author"`
+	Likes     string `json:"likes"`
+	Views     string `json:"views"`
+	Comments  string `json:"comments"`
+	Date      string `json:"date"`
+	ImagePath string `json:"imagePath"`
+	VideoPath string `json:"videoPath"`
 }
 
 func init() {
@@ -65,7 +68,10 @@ func main() {
 	http.HandleFunc("/profile", getProfile)
 	http.HandleFunc("/registered", getRegistered)
 	http.HandleFunc("/forgot", getForget)
-	http.HandleFunc("/filter", postFilter)
+	http.HandleFunc("/filter", getFilter)
+	http.HandleFunc("/postFilter", postFilter)
+	http.HandleFunc("/addVideo", getAddVideo)
+	http.HandleFunc("/addVideoByUser", addVideoByUser)
 
 	fmt.Printf("Server listening on port %s...\n", port)
 	err := http.ListenAndServe(port, nil)
@@ -80,6 +86,14 @@ func getIndex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.ServeFile(w, r, "frontend/index.html")
+}
+
+func getAddVideo(w http.ResponseWriter, r *http.Request) {
+	if !limiter.Allow() {
+		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+		return
+	}
+	http.ServeFile(w, r, "frontend/videoadder.html")
 }
 
 func get404(w http.ResponseWriter, r *http.Request) {
@@ -203,16 +217,22 @@ func addVideoByUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var video Video
+	var video Videos
 
 	err := json.NewDecoder(r.Body).Decode(&video)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid JSON format")
+		fmt.Println("Error decoding JSON:", err)
 		return
 	}
-	db.Create(&video)
 
-	http.Redirect(w, r, "/index", http.StatusFound)
+	result := db.Create(&video)
+	if result.Error != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to add video")
+		return
+	}
+	fmt.Println("success")
+	http.Redirect(w, r, "/filter", http.StatusFound)
 }
 
 func respondWithError(w http.ResponseWriter, code int, message string) {
@@ -244,32 +264,61 @@ func getFilter(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.ServeFile(w, r, "/frontend/filter.html")
+	http.ServeFile(w, r, "frontend/filter.html")
 }
 func postFilter(w http.ResponseWriter, r *http.Request) {
 	if !limiter.Allow() {
 		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
 		return
 	}
-	filter := r.URL.Query().Get("filter")
-	sort := r.URL.Query().Get("sort")
 
-	var video Video
-	err := json.NewDecoder(r.Body).Decode(&video)
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid JSON format")
+	var filter struct {
+		Title  string `json:"title"`
+		Author string `json:"author"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&filter); err != nil {
+		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
 		return
 	}
 
-	query := "SELECT * FROM video"
+	query := "SELECT * FROM videos"
 
-	if filter != "" {
-		query += " WHERE name LIKE '%" + filter + "%'"
+	if filter.Title != "" {
+		query += " WHERE name LIKE '%" + filter.Title + "%'"
 	}
 
-	if sort != "" {
-		query += " ORDER BY " + sort
+	if filter.Author != "" {
+		if filter.Title != "" {
+			query += " AND"
+		} else {
+			query += " WHERE"
+		}
+		query += " author LIKE '%" + filter.Author + "%'"
 	}
 
-	db.Find(&video)
+	query += " ORDER BY views DESC"
+
+	fmt.Println(query)
+	rows, err := db.Raw(query).Rows()
+	if err != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var fetchedData []Videos
+	for rows.Next() {
+		var video Videos
+
+		fetchedData = append(fetchedData, video)
+	}
+
+	if err := rows.Err(); err != nil {
+		http.Error(w, "Error iterating over rows", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(fetchedData)
 }
