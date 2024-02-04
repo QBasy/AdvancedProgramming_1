@@ -1,5 +1,20 @@
 package main
 
+/*err := rows.Scan(&video.Name, &video.Author, &video.Likes, &video.Views, &video.Comments, &video.Date, &video.ImagePath, &video.VideoPath, &video.CreatedAt, &video.UpdatedAt, &video.DeletedAt, &video.ID)
+imagePath := ""
+videoPath := ""
+
+video.VideoPath = videoPath
+video.ImagePath = imagePath
+
+err := rows.Scan(&video.Name, &video.Author, &video.Likes, &video.Views, &video.Comments, &video.Date, &video.ImagePath, &video.VideoPath, &video.CreatedAt, &video.UpdatedAt, &video.DeletedAt, &video.ID)
+
+if err != nil {
+	fmt.Println("ERROR", err)
+	http.Error(w, "Error scanning row", http.StatusInternalServerError)
+	return
+}*/
+
 /*
 import (
 	"database/sql"

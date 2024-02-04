@@ -273,28 +273,32 @@ func postFilter(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var filter struct {
-		Title  string `json:"title"`
-		Author string `json:"author"`
+		title  string `json:"title"`
+		author string `json:"author"`
 	}
 
-	if err := json.NewDecoder(r.Body).Decode(&filter); err != nil {
+	err := json.NewDecoder(r.Body).Decode(&filter)
+	if err != nil {
 		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
 		return
 	}
 
+	fmt.Println(filter.author + " and " + filter.author)
 	query := "SELECT * FROM videos"
 
-	if filter.Title != "" {
-		query += " WHERE name LIKE '%" + filter.Title + "%'"
+	if filter.title != "" {
+		query += " WHERE name LIKE '%" + filter.title + "%'"
+		fmt.Println(query)
 	}
 
-	if filter.Author != "" {
-		if filter.Title != "" {
+	if filter.author != "" {
+		if filter.title != "" {
 			query += " AND"
 		} else {
 			query += " WHERE"
 		}
-		query += " author LIKE '%" + filter.Author + "%'"
+		fmt.Println(query)
+		query += " author LIKE '%" + filter.author + "%'"
 	}
 
 	query += " ORDER BY views DESC"
