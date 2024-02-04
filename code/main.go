@@ -5,10 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"golang.org/x/time/rate"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -16,15 +12,20 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/sirupsen/logrus"
+	"golang.org/x/time/rate"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 var limiter = rate.NewLimiter(1, 3)
 
 const port = ":8888"
-const logFilePath = "app.log"
+const logFilePath = "logs/app.log"
 
 var db *gorm.DB
-var logger *log.Logger
+var logger *logrus.Logger
 
 type User struct {
 	gorm.Model
@@ -45,17 +46,18 @@ type Videos struct {
 	Views     string `json:"views"`
 	Comments  string `json:"comments"`
 	Date      string `json:"date"`
-	ImagePath string `json:"imagePath"`
-	VideoPath string `json:"videoPath"`
+	ImagePath string `json:"imagepath"`
+	VideoPath string `json:"videopath"`
 }
 
 func init() {
 	logFile, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		log.Fatal(err)
+		logrus.Fatal(err)
 	}
-	defer logFile.Close()
-	logger = log.New(logFile, "", log.Ldate|log.Ltime)
+	logger = logrus.New()
+	logger.SetOutput(logFile)
+	logger.SetFormatter(&logrus.JSONFormatter{})
 
 	dsn := "host=localhost port=5432 user=postgres password=japierdole dbname=advanced sslmode=disable"
 	var err1 error
@@ -68,21 +70,31 @@ func init() {
 	if err2 != nil {
 		logger.Fatalf("Error migrating database: %v", err2)
 	}
+
+	defer logFile.Close()
 }
 
 func main() {
+	logFile, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		logrus.Fatal(err)
+	}
+	logger := logrus.New()
+	logger.SetOutput(logFile)
+	logger.SetFormatter(&logrus.JSONFormatter{})
+
 	defer func() {
 		sqlDB, err := db.DB()
 		if err != nil {
-			log.Fatalf("Error getting database: %v", err)
+			logrus.Fatalf("Error getting database: %v", err)
 		}
 		if err := sqlDB.Close(); err != nil {
-			log.Fatalf("Error closing database: %v", err)
+			logrus.Fatalf("Error closing database: %v", err)
 		}
 	}()
 
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("frontend/"))))
-
+	logger.Println("Server Started")
 	http.HandleFunc("/", handleRequest)
 
 	srv := &http.Server{Addr: port}
@@ -96,14 +108,14 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		if err := srv.Shutdown(ctx); err != nil {
-			logger.Fatalf("Error shutting down server: %v", err)
+			logrus.Fatalf("Error shutting down server: %v", err)
 		}
-		logger.Println("Server shutdown complete")
+		logrus.Info("Server shutdown")
 	}()
 
-	logger.Printf("Server listening on port %s...\n", port)
+	logrus.Printf("Server listening on port %s...\n", port)
 	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		logger.Fatalf("Error starting server: %v", err)
+		logrus.Fatalf("Error starting server: %v", err)
 	}
 }
 
@@ -138,6 +150,8 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		postFilter(w, r)
 	case "/starter":
 		serveStarter(w, r)
+	case "/addVideoByUser":
+		addVideoByUser(w, r)
 	default:
 		http.NotFound(w, r)
 	}
@@ -277,6 +291,44 @@ func serveFilter(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "frontend/filter.html")
 }
 
+func addVideoByUser(w http.ResponseWriter, r *http.Request) {
+	if !limiter.Allow() {
+		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+		return
+	}
+
+	var video Videos
+
+	err := json.NewDecoder(r.Body).Decode(&video)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid JSON format")
+		logger.Println("Error decoding JSON:", err)
+		return
+	}
+
+	dbVideo := Videos{
+		Name:      video.Name,
+		Author:    video.Author,
+		Likes:     video.Likes,
+		Views:     video.Views,
+		Comments:  video.Comments,
+		Date:      video.Date,
+		ImagePath: video.ImagePath,
+		VideoPath: video.VideoPath,
+	}
+
+	result := db.Create(&dbVideo)
+	if result.Error != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to add video")
+		return
+	}
+	logger.WithFields(logrus.Fields{
+		"action": "add_video",
+		"video":  video.Name,
+	}).Info("Video added successfully")
+	http.Redirect(w, r, "/filter", http.StatusFound)
+}
+
 func postFilter(w http.ResponseWriter, r *http.Request) {
 	if !limiter.Allow() {
 		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
@@ -293,12 +345,8 @@ func postFilter(w http.ResponseWriter, r *http.Request) {
 
 	pageSize, err := strconv.Atoi(pageSizeStr)
 	if err != nil || pageSize <= 0 {
-		pageSize = 10
+		pageSize = 12
 	}
-
-	offset := (page - 1) * pageSize
-
-	query := "SELECT * FROM videos"
 
 	var filter struct {
 		Title  string `json:"title"`
@@ -310,6 +358,8 @@ func postFilter(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
 		return
 	}
+
+	query := "SELECT * FROM videos"
 
 	if filter.Title != "" {
 		query += " WHERE name LIKE '%" + filter.Title + "%'"
@@ -323,10 +373,6 @@ func postFilter(w http.ResponseWriter, r *http.Request) {
 		}
 		query += " author LIKE '%" + filter.Author + "%'"
 	}
-
-	query += " ORDER BY views DESC"
-
-	query += fmt.Sprintf(" LIMIT %d OFFSET %d", pageSize, offset)
 
 	rows, err := db.Raw(query).Rows()
 	if err != nil {
