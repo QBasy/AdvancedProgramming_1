@@ -1,20 +1,30 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"golang.org/x/time/rate"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"strconv"
+	"strings"
+	"syscall"
+	"time"
 )
 
 var limiter = rate.NewLimiter(1, 3)
 
 const port = ":8888"
+const logFilePath = "app.log"
 
 var db *gorm.DB
+var logger *log.Logger
 
 type User struct {
 	gorm.Model
@@ -40,87 +50,100 @@ type Videos struct {
 }
 
 func init() {
-	dsn := "host=localhost port=5432 user=postgres password=japierdole dbname=advanced sslmode=disable"
-	var err error
-	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	logFile, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer logFile.Close()
+	logger = log.New(logFile, "", log.Ldate|log.Ltime)
 
-	err = db.AutoMigrate(&User{})
-	if err != nil {
-		log.Fatal(err)
+	dsn := "host=localhost port=5432 user=postgres password=japierdole dbname=advanced sslmode=disable"
+	var err1 error
+	db, err1 = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err1 != nil {
+		logger.Fatalf("Error connecting to database: %v", err1)
+	}
+
+	err2 := db.AutoMigrate(&User{})
+	if err2 != nil {
+		logger.Fatalf("Error migrating database: %v", err2)
 	}
 }
 
 func main() {
+	defer func() {
+		sqlDB, err := db.DB()
+		if err != nil {
+			log.Fatalf("Error getting database: %v", err)
+		}
+		if err := sqlDB.Close(); err != nil {
+			log.Fatalf("Error closing database: %v", err)
+		}
+	}()
+
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("frontend/"))))
 
-	http.HandleFunc("/", getMain)
-	http.HandleFunc("/index", getIndex)
-	http.HandleFunc("/log", getLogin)
-	http.HandleFunc("/register", getRegister)
-	http.HandleFunc("/createUser", postRegister)
-	http.HandleFunc("/notfound", get404)
-	http.HandleFunc("/notfound/", get404)
-	http.HandleFunc("/login", getLogin)
-	http.HandleFunc("/postLogin", postLogin)
-	http.HandleFunc("/profile", getProfile)
-	http.HandleFunc("/registered", getRegistered)
-	http.HandleFunc("/forgot", getForget)
-	http.HandleFunc("/filter", getFilter)
-	http.HandleFunc("/postFilter", postFilter)
-	http.HandleFunc("/addVideo", getAddVideo)
-	http.HandleFunc("/addVideoByUser", addVideoByUser)
+	http.HandleFunc("/", handleRequest)
 
-	fmt.Printf("Server listening on port %s...\n", port)
-	err := http.ListenAndServe(port, nil)
-	if err != nil {
-		return
+	srv := &http.Server{Addr: port}
+
+	go func() {
+		sigint := make(chan os.Signal, 1)
+		signal.Notify(sigint, os.Interrupt, syscall.SIGTERM)
+		<-sigint
+
+		logger.Println("Shutting down server...")
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		if err := srv.Shutdown(ctx); err != nil {
+			logger.Fatalf("Error shutting down server: %v", err)
+		}
+		logger.Println("Server shutdown complete")
+	}()
+
+	logger.Printf("Server listening on port %s...\n", port)
+	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		logger.Fatalf("Error starting server: %v", err)
 	}
 }
 
-func getIndex(w http.ResponseWriter, r *http.Request) {
+func handleRequest(w http.ResponseWriter, r *http.Request) {
 	if !limiter.Allow() {
 		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
 		return
 	}
-	http.ServeFile(w, r, "frontend/index.html")
-}
 
-func getAddVideo(w http.ResponseWriter, r *http.Request) {
-	if !limiter.Allow() {
-		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
-		return
+	switch r.URL.Path {
+	case "/index":
+		serveIndex(w, r)
+	case "/addVideo":
+		serveAddVideo(w, r)
+	case "/notfound":
+		serveNotFound(w, r)
+	case "/login":
+		serveLogin(w, r)
+	case "/register":
+		serveRegister(w, r)
+	case "/createUser":
+		createUser(w, r)
+	case "/postLogin":
+		postLogin(w, r)
+	case "/registered":
+		serveRegistered(w, r)
+	case "/forgot":
+		serveForgot(w, r)
+	case "/filter":
+		serveFilter(w, r)
+	case "/postFilter":
+		postFilter(w, r)
+	case "/starter":
+		serveStarter(w, r)
+	default:
+		http.NotFound(w, r)
 	}
-	http.ServeFile(w, r, "frontend/videoadder.html")
 }
 
-func get404(w http.ResponseWriter, r *http.Request) {
-	if !limiter.Allow() {
-		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
-		return
-	}
-	http.ServeFile(w, r, "frontend/404.html")
-}
-
-func getRegistered(w http.ResponseWriter, r *http.Request) {
-	if !limiter.Allow() {
-		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
-		return
-	}
-	http.ServeFile(w, r, "frontend/registered.html")
-}
-
-func getProfile(w http.ResponseWriter, r *http.Request) {
-	if !limiter.Allow() {
-		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
-		return
-	}
-	http.ServeFile(w, r, "frontend/profile.html")
-}
-
-func getMain(w http.ResponseWriter, r *http.Request) {
+func serveStarter(w http.ResponseWriter, r *http.Request) {
 	if !limiter.Allow() {
 		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
 		return
@@ -128,23 +151,31 @@ func getMain(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "frontend/starter.html")
 }
 
-func getForget(w http.ResponseWriter, r *http.Request) {
+func serveIndex(w http.ResponseWriter, r *http.Request) {
 	if !limiter.Allow() {
 		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
 		return
 	}
-	http.ServeFile(w, r, "frontend/forgot.html")
+	http.ServeFile(w, r, "frontend/starter.html")
 }
 
-func getRegister(w http.ResponseWriter, r *http.Request) {
+func serveAddVideo(w http.ResponseWriter, r *http.Request) {
 	if !limiter.Allow() {
 		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
 		return
 	}
-	http.ServeFile(w, r, "frontend/register.html")
+	http.ServeFile(w, r, "frontend/videoadder.html")
 }
 
-func getLogin(w http.ResponseWriter, r *http.Request) {
+func serveNotFound(w http.ResponseWriter, r *http.Request) {
+	if !limiter.Allow() {
+		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+		return
+	}
+	http.ServeFile(w, r, "frontend/404.html")
+}
+
+func serveLogin(w http.ResponseWriter, r *http.Request) {
 	if !limiter.Allow() {
 		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
 		return
@@ -152,13 +183,56 @@ func getLogin(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "frontend/login.html")
 }
 
+func serveRegister(w http.ResponseWriter, r *http.Request) {
+	if !limiter.Allow() {
+		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+		return
+	}
+	http.ServeFile(w, r, "frontend/register.html")
+}
+
+func createUser(w http.ResponseWriter, r *http.Request) {
+	if !limiter.Allow() {
+		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+		return
+	}
+
+	var user User
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid JSON format")
+		return
+	}
+
+	if strings.TrimSpace(user.Name) == "" || strings.TrimSpace(user.Password) == "" {
+		respondWithError(w, http.StatusBadRequest, "Name or Password cannot be empty")
+		return
+	}
+
+	if !isUserInDatabase(user) {
+		respondWithError(w, http.StatusConflict, "User already exists")
+		return
+	}
+
+	db.Create(&user)
+
+	response := Response{
+		Status:  "success",
+		Message: "User created successfully",
+	}
+	respondWithJSON(w, http.StatusCreated, response)
+}
+
 func postLogin(w http.ResponseWriter, r *http.Request) {
 	if !limiter.Allow() {
 		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
 		return
 	}
+
 	var user User
+
 	err := json.NewDecoder(r.Body).Decode(&user)
+
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid JSON format")
 		return
@@ -178,61 +252,110 @@ func postLogin(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, response)
 }
 
-func postRegister(w http.ResponseWriter, r *http.Request) {
+func serveRegistered(w http.ResponseWriter, r *http.Request) {
 	if !limiter.Allow() {
 		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
 		return
 	}
-	var user User
-	err := json.NewDecoder(r.Body).Decode(&user)
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid JSON format")
-		return
-	}
-
-	if !isUserInDatabase(user) {
-		handle404(w, r)
-		return
-	}
-
-	db.Create(&user)
-
-	http.Redirect(w, r, "/registered", http.StatusFound)
+	http.ServeFile(w, r, "frontend/registered.html")
 }
 
-func handle404(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "frontend/404.html")
+func serveForgot(w http.ResponseWriter, r *http.Request) {
+	if !limiter.Allow() {
+		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+		return
+	}
+	http.ServeFile(w, r, "frontend/forgot.html")
+}
+
+func serveFilter(w http.ResponseWriter, r *http.Request) {
+	if !limiter.Allow() {
+		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+		return
+	}
+
+	http.ServeFile(w, r, "frontend/filter.html")
+}
+
+func postFilter(w http.ResponseWriter, r *http.Request) {
+	if !limiter.Allow() {
+		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+		return
+	}
+
+	pageStr := r.URL.Query().Get("page")
+	pageSizeStr := r.URL.Query().Get("pageSize")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page <= 0 {
+		page = 1
+	}
+
+	pageSize, err := strconv.Atoi(pageSizeStr)
+	if err != nil || pageSize <= 0 {
+		pageSize = 10
+	}
+
+	offset := (page - 1) * pageSize
+
+	query := "SELECT * FROM videos"
+
+	var filter struct {
+		Title  string `json:"title"`
+		Author string `json:"author"`
+	}
+
+	err = json.NewDecoder(r.Body).Decode(&filter)
+	if err != nil {
+		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
+		return
+	}
+
+	if filter.Title != "" {
+		query += " WHERE name LIKE '%" + filter.Title + "%'"
+	}
+
+	if filter.Author != "" {
+		if filter.Title != "" {
+			query += " AND"
+		} else {
+			query += " WHERE"
+		}
+		query += " author LIKE '%" + filter.Author + "%'"
+	}
+
+	query += " ORDER BY views DESC"
+
+	query += fmt.Sprintf(" LIMIT %d OFFSET %d", pageSize, offset)
+
+	rows, err := db.Raw(query).Rows()
+	if err != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var fetchedData []Videos
+	for rows.Next() {
+		var video Videos
+		db.ScanRows(rows, &video)
+		fetchedData = append(fetchedData, video)
+	}
+
+	if err := rows.Err(); err != nil {
+		http.Error(w, "Error iterating over rows", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(fetchedData)
 }
 
 func isUserInDatabase(user User) bool {
 	var existingUser User
-	result := db.First(&existingUser, "name = ? OR password = ?", user.Name, user.Password)
+	result := db.First(&existingUser, "name = ?", user.Name)
 
-	return result.RowsAffected == 0
-}
-
-func addVideoByUser(w http.ResponseWriter, r *http.Request) {
-	if !limiter.Allow() {
-		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
-		return
-	}
-
-	var video Videos
-
-	err := json.NewDecoder(r.Body).Decode(&video)
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid JSON format")
-		fmt.Println("Error decoding JSON:", err)
-		return
-	}
-
-	result := db.Create(&video)
-	if result.Error != nil {
-		respondWithError(w, http.StatusInternalServerError, "Failed to add video")
-		return
-	}
-	fmt.Println("success")
-	http.Redirect(w, r, "/filter", http.StatusFound)
+	return result.RowsAffected != 0
 }
 
 func respondWithError(w http.ResponseWriter, code int, message string) {
@@ -254,75 +377,6 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	w.WriteHeader(code)
 	_, err = w.Write(response)
 	if err != nil {
-		return
+		logger.Printf("Error writing response: %v\n", err)
 	}
-}
-
-func getFilter(w http.ResponseWriter, r *http.Request) {
-	if !limiter.Allow() {
-		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
-		return
-	}
-
-	http.ServeFile(w, r, "frontend/filter.html")
-}
-func postFilter(w http.ResponseWriter, r *http.Request) {
-	if !limiter.Allow() {
-		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
-		return
-	}
-
-	var filter struct {
-		title  string `json:"title"`
-		author string `json:"author"`
-	}
-
-	err := json.NewDecoder(r.Body).Decode(&filter)
-	if err != nil {
-		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
-		return
-	}
-
-	fmt.Println(filter.author + " and " + filter.author)
-	query := "SELECT * FROM videos"
-
-	if filter.title != "" {
-		query += " WHERE name LIKE '%" + filter.title + "%'"
-		fmt.Println(query)
-	}
-
-	if filter.author != "" {
-		if filter.title != "" {
-			query += " AND"
-		} else {
-			query += " WHERE"
-		}
-		fmt.Println(query)
-		query += " author LIKE '%" + filter.author + "%'"
-	}
-
-	query += " ORDER BY views DESC"
-
-	fmt.Println(query)
-	rows, err := db.Raw(query).Rows()
-	if err != nil {
-		http.Error(w, "Database error", http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
-
-	var fetchedData []Videos
-	for rows.Next() {
-		var video Videos
-
-		fetchedData = append(fetchedData, video)
-	}
-
-	if err := rows.Err(); err != nil {
-		http.Error(w, "Error iterating over rows", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(fetchedData)
 }

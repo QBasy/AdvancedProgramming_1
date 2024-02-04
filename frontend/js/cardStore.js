@@ -23,7 +23,7 @@ function showPage(pageNumber) {
   const section = document.querySelector('.py-5 .container .row');
   section.innerHTML = '';
   pageCards.forEach(cardData => {
-    const card = createCard(cardData.title, cardData.author, cardData.date, cardData.imagePath);
+    const card = createCard(cardData.title, cardData.author, cardData.date, cardData.imageURL);
     section.appendChild(card);
   });
 
@@ -73,25 +73,8 @@ function createCard(title, author, date, imageURL) {
 
   return col;
 }
-/*const name = document.getElementById('VideoNameID').value;
-const author = document.getElementById('AuthorID').value;
 
-let filter = {
-  name,
-  author
-}
-
-// Example JSON data for new cards
-const jsonData = fetch('/postFilter', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify(filter)
-});*/
-
-
-    /*[
+const jsonData = [
   {
     "title": "Jujutsu Kaisen S1EP2",
     "author": "megaTerminator228",
@@ -188,4 +171,6 @@ const jsonData = fetch('/postFilter', {
     "date": "1 day ago",
     "imageURL": "https://dummyimage.com/450x300/dee2e6/6c757d.jpg"
   },
-];*/
+];
+
+showPage(currentPage);

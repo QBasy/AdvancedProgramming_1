@@ -1,16 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/html">
 <head>
     <meta charset="UTF-8">
-    <title>Filter</title>
+    <title>filter</title>
     <link rel="icon" type="image/x-icon" href="img/favicon-32x32.png">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://kit.fontawesome.com/f5c7d6a886.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css">
     <link href="css/styles.css" rel="stylesheet" type="text/css">
 </head>
+
 <body>
+<!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="container px-4 px-lg-5"><a class="navbar-brand" href="/" id="name">FlickFusion</a><button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
@@ -52,6 +54,7 @@
     </div>
 </nav>
 
+<!-- Header -->
 <header class="bg-dark py-5">
     <div class="container px-4 px-lg-5 my-5">
         <div class="text-center text-white">
@@ -96,31 +99,26 @@
         </div>
     </div>
 </div>
+<!-- Video Section -->
 <section class="py-5">
     <div class="container px-4 px-lg-5 mt-5">
-        <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center" id="videoCards">
+        <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
 
-        </div>
-    </div>
-    <div class="container">
-        <div class="row justify-content-center">
-            <nav aria-label="Page navigation example">
-                <ul class="pagination" id="pagination">
-
-                </ul>
-            </nav>
         </div>
     </div>
 </section>
-
+<!-- Footer-->
 <footer class="py-5 bg-dark">
     <div class="container">
         <p class="m-0 text-center text-white">Copyright &copy; FlickFusion 2023</p>
     </div>
 </footer>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://unpkg.com/aos@next/dist/aos.js"></script>
 <script src="js/scripts.js"></script>
+<script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script>
+    AOS.init();
+</script>
 <script>
     const cardsPerPage = 12;
     let currentPage = 1;
@@ -133,9 +131,11 @@
         author,
     };
 
-    async function fetchData(page) {
+
+    async function fetchData() {
+        console.log(filter.author, filter.title);
         try {
-            const response = await fetch(`/postFilter?page=${page}&pageSize=${cardsPerPage}`, {
+            const response = await fetch('/postFilter', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -153,34 +153,49 @@
         }
     }
 
-    async function updateUI(page) {
-        const jsonData = await fetchData(page);
-        if (!jsonData) return;
+    async function initialize() {
+        const jsonData = await fetchData();
+        showPage(currentPage, jsonData);
+    }
 
-        const section = document.getElementById('videoCards');
+    function showPage(pageNumber, jsonData) {
+        if (!jsonData) {
+            console.error('jsonData is not available yet');
+            return;
+        }
+
+        const start = (pageNumber - 1) * cardsPerPage;
+        const end = pageNumber * cardsPerPage;
+        const pageCards = jsonData.slice(start, end);
+
+        const section = document.querySelector('.py-5 .container .row');
         section.innerHTML = '';
-        jsonData.forEach(cardData => {
-            const card = createCard(cardData.name, cardData.author, cardData.date, cardData.imagePath);
+        pageCards.forEach(cardData => {
+            const card = createCard(cardData.name, cardData.author, cardData.date, cardData.imagepath);
             section.appendChild(card);
         });
 
-        updatePaginationUI(page, Math.ceil(jsonData.length / cardsPerPage));
+        const pageSelector = document.querySelector('.page-selector');
+        if (pageSelector) {
+            pageSelector.remove();
+        }
+        if (Math.ceil(jsonData.length / cardsPerPage) > 1) {
+            section.parentElement.appendChild(createPageSelector(Math.ceil(jsonData.length / cardsPerPage)));
+        }
     }
 
-    function updatePaginationUI(currentPage, totalPages) {
-        const pagination = document.getElementById('pagination');
-        pagination.innerHTML = '';
-
+    function createPageSelector(totalPages) {
+        const pageSelector = document.createElement('div');
+        pageSelector.classList.add('page-selector');
         for (let i = 1; i <= totalPages; i++) {
-            const li = document.createElement('li');
-            li.classList.add('page-item');
-            const button = document.createElement('button');
-            button.classList.add('page-link');
-            button.textContent = i;
-            button.addEventListener('click', () => updateUI(i));
-            li.appendChild(button);
-            pagination.appendChild(li);
+            const pageButton = document.createElement('button');
+            pageButton.textContent = i;
+            pageButton.addEventListener('click', () => {
+                showPage(i);
+            });
+            pageSelector.appendChild(pageButton);
         }
+        return pageSelector;
     }
 
     function createCard(title, author, date, imageURL) {
@@ -221,14 +236,13 @@
         return col;
     }
 
-    updateUI(1);
-
+    document.addEventListener('DOMContentLoaded', initialize);
     document.getElementById('Search').addEventListener("click", async () => {
         filter.title = document.getElementById('VideoNameID').value;
         filter.author = document.getElementById('AuthorID').value;
-        await updateUI(1);
+        await initialize();
     });
 </script>
 </body>
-</html>
 
+</html>
