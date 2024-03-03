@@ -21,7 +21,7 @@ import (
 
 var limiter = rate.NewLimiter(1, 10)
 
-const port = ":8888"
+const port = "8888"
 const logFilePath = "logs/app.log"
 
 var db *gorm.DB
@@ -122,7 +122,7 @@ func main() {
 		handleRequest(w, r)
 	})
 
-	srv := &http.Server{Addr: port}
+	srv := &http.Server{Addr: ":" + port}
 
 	go func() {
 		sigint := make(chan os.Signal, 1)

@@ -141,3 +141,14 @@
 {"level":"fatal","msg":"Error connecting to database: failed to connect to `host=dpg-cni5e2n79t8c73bprang-a user=qbasy database=advanced`: hostname resolving error (lookup dpg-cni5e2n79t8c73bprang-a: no such host)","time":"2024-03-03T15:56:51+06:00"}
 {"level":"fatal","msg":"Error connecting to database: failed to connect to `host=dpg-cni5e2n79t8c73bprang-a user=qbasy database=advanced`: hostname resolving error (lookup dpg-cni5e2n79t8c73bprang-a: no such host)","time":"2024-03-03T15:59:08+06:00"}
 {"level":"info","msg":"Shutting down server...","time":"2024-03-03T16:01:31+06:00"}
+{"level":"info","msg":"Server Started","time":"2024-03-03T16:13:43+06:00"}
+{"level":"info","msg":"Server Started","time":"2024-03-03T16:13:45+06:00"}
+{"level":"info","msg":"Server Started","time":"2024-03-03T16:13:47+06:00"}
+{"level":"info","msg":"Server Started","time":"2024-03-03T16:13:48+06:00"}
+{"level":"info","msg":"Server Started","time":"2024-03-03T16:13:49+06:00"}
+{"level":"info","msg":"Server Started","time":"2024-03-03T16:13:49+06:00"}
+{"level":"info","msg":"Server Started","time":"2024-03-03T16:13:50+06:00"}
+{"level":"info","msg":"Server Started","time":"2024-03-03T16:13:52+06:00"}
+{"level":"info","msg":"Server Started","time":"2024-03-03T16:14:24+06:00"}
+{"level":"info","msg":"Shutting down server...","time":"2024-03-03T16:20:44+06:00"}
+{"level":"info","msg":"Shutting down server...","time":"2024-03-03T16:20:55+06:00"}
