@@ -92,6 +92,11 @@ func init() {
 	defer logFile.Close()
 }
 
+func createTablesIfNotExists(db *gorm.DB) {
+	db.AutoMigrate(&User{})
+	db.AutoMigrate(&Photos{})
+}
+
 func main() {
 	logFile, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -137,7 +142,10 @@ func main() {
 		}
 		logrus.Info("Server shutdown")
 	}()
+	createTablesIfNotExists(db)
+
 	TestGetFilter()
+
 	logrus.Printf("Server listening on port %s...\n", port)
 	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		logrus.Fatalf("Error starting server: %v", err)
