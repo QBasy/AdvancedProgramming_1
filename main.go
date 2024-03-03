@@ -395,7 +395,7 @@ func postFilter(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := "SELECT * FROM videos"
+	query := "SELECT * FROM photos"
 
 	if filter.Title != "" {
 		query += " WHERE name LIKE '%" + filter.Title + "%'"
