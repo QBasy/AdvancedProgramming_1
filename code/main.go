@@ -19,7 +19,7 @@ import (
 	"gorm.io/gorm"
 )
 
-var limiter = rate.NewLimiter(1, 3)
+var limiter = rate.NewLimiter(1, 10)
 
 const port = ":8888"
 const logFilePath = "logs/app.log"
@@ -38,16 +38,14 @@ type Response struct {
 	Message string `json:"message"`
 }
 
-type Videos struct {
+type Photos struct {
 	gorm.Model
 	Name      string `json:"title"`
 	Author    string `json:"author"`
 	Likes     string `json:"likes"`
-	Views     string `json:"views"`
 	Comments  string `json:"comments"`
 	Date      string `json:"date"`
 	ImagePath string `json:"imagepath"`
-	VideoPath string `json:"videopath"`
 }
 
 func init() {
@@ -93,7 +91,7 @@ func main() {
 		}
 	}()
 
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("frontend/"))))
+	http.Handle("./", http.FileServer(http.Dir("frontend/")))
 	logger.Println("Server Started")
 	http.HandleFunc("/", handleRequest)
 
@@ -125,6 +123,11 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if r.URL.Path == "/" {
+		r.URL.Path += "index"
+		http.Redirect(w, r, "/index", 500)
+	}
+
 	switch r.URL.Path {
 	case "/index":
 		serveIndex(w, r)
@@ -153,7 +156,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	case "/addVideoByUser":
 		addVideoByUser(w, r)
 	default:
-		http.NotFound(w, r)
+		serveNotFound(w, r)
 	}
 }
 
@@ -162,7 +165,7 @@ func serveStarter(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
 		return
 	}
-	http.ServeFile(w, r, "frontend/starter.html")
+	http.ServeFile(w, r, "starter.html")
 }
 
 func serveIndex(w http.ResponseWriter, r *http.Request) {
@@ -297,35 +300,33 @@ func addVideoByUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var video Videos
+	var photo Photos
 
-	err := json.NewDecoder(r.Body).Decode(&video)
+	err := json.NewDecoder(r.Body).Decode(&photo)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid JSON format")
 		logger.Println("Error decoding JSON:", err)
 		return
 	}
 
-	dbVideo := Videos{
-		Name:      video.Name,
-		Author:    video.Author,
-		Likes:     video.Likes,
-		Views:     video.Views,
-		Comments:  video.Comments,
-		Date:      video.Date,
-		ImagePath: video.ImagePath,
-		VideoPath: video.VideoPath,
+	dbVideo := Photos{
+		Name:      photo.Name,
+		Author:    photo.Author,
+		Likes:     photo.Likes,
+		Comments:  photo.Comments,
+		Date:      photo.Date,
+		ImagePath: photo.ImagePath,
 	}
 
 	result := db.Create(&dbVideo)
 	if result.Error != nil {
-		respondWithError(w, http.StatusInternalServerError, "Failed to add video")
+		respondWithError(w, http.StatusInternalServerError, "Failed to add Photo")
 		return
 	}
 	logger.WithFields(logrus.Fields{
-		"action": "add_video",
-		"video":  video.Name,
-	}).Info("Video added successfully")
+		"action": "add_photo",
+		"video":  photo.Name,
+	}).Info("Photo added successfully")
 	http.Redirect(w, r, "/filter", http.StatusFound)
 }
 
@@ -374,6 +375,20 @@ func postFilter(w http.ResponseWriter, r *http.Request) {
 		query += " author LIKE '%" + filter.Author + "%'"
 	}
 
+	// sort
+	sortOrder := r.URL.Query().Get("sortOrder")
+
+	switch strings.ToLower(sortOrder) {
+	case "1":
+		query += " ORDER BY date ASC"
+		break
+	case "2":
+		query += " ORDER BY date DESC"
+		break
+	default:
+		query += " ORDER BY date DESC"
+	}
+
 	rows, err := db.Raw(query).Rows()
 	if err != nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
@@ -381,11 +396,11 @@ func postFilter(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	var fetchedData []Videos
+	var fetchedData []Photos
 	for rows.Next() {
-		var video Videos
-		db.ScanRows(rows, &video)
-		fetchedData = append(fetchedData, video)
+		var photo Photos
+		db.ScanRows(rows, &photo)
+		fetchedData = append(fetchedData, photo)
 	}
 
 	if err := rows.Err(); err != nil {

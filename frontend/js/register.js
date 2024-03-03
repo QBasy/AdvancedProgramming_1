@@ -93,7 +93,7 @@ function loginValidation(){
 }
 
 function restoreValidation(){
-  let email = document.formFiller.Email.value;
+  let email = document.getElementById('Email').value;
   let emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   if(email===""){

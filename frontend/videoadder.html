@@ -14,7 +14,7 @@
             const videoName = document.getElementById('videoName').value;
             const user = document.getElementById('author').value;
             const imagePath = document.getElementById('imagePath').value;
-            const videoPath = document.getElementById('videoPath').value;
+            const videoPath = "nothing";
 
             let requestBody = {
                 "name": videoName,
@@ -143,12 +143,6 @@
                 <label>
                     <i class="fa-solid fa-envelope"></i>
                     <input type="text" name="image" id="imagePath" placeholder="Video Image">
-                </label>
-            </div>
-            <div class="input-box">
-                <label>
-                    <i class="fa-solid fa-envelope"></i>
-                    <input type="text" name="video" id="videoPath" placeholder="Video Path">
                 </label>
             </div>
             <div class="button">
