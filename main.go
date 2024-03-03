@@ -344,7 +344,7 @@ func addVideoByUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dbVideo := Photos{
+	dbPhoto := Photos{
 		Name:      photo.Name,
 		Author:    photo.Author,
 		Likes:     photo.Likes,
@@ -353,7 +353,7 @@ func addVideoByUser(w http.ResponseWriter, r *http.Request) {
 		ImagePath: photo.ImagePath,
 	}
 
-	result := db.Create(&dbVideo)
+	result := db.Create(&dbPhoto)
 	if result.Error != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to add Photo")
 		return
