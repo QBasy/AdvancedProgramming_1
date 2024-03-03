@@ -13,9 +13,10 @@
   <link href="css/register.css" rel="stylesheet" type="text/css">
   <script>
     async function registerUser() {
-      if (validation()) {
-        let name = document.getElementById("name").value;
-        let password = document.getElementById("password").value;
+      if (true) {
+        let name = document.getElementById("Name").value;
+        let password = document.getElementById("Password").value;
+        let email = document.getElementById("Email").value;
         let data;
 
         await fetch('/createUser', {
@@ -23,7 +24,7 @@
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(name, password)
+          body: JSON.stringify({ email, name, password })
         })
                 .then(async response => {
                   if (response.redirected) {
@@ -58,25 +59,25 @@
 <body>
 <div class="container" data-aos="fade-down" data-aos-duration="900" data-aos-delay="200">
   <div class="form-box">
-    <form action="" name="formFiller">
+    <form action="" name="formFiller" onsubmit="registerUser(); return false;">
       <h2>Registration</h2>
       <p id="result"></p>
       <div class="input-box">
         <label>
           <i class="fa-solid fa-user"></i>
-          <input type="text" name="Username" placeholder="Username">
+          <input type="text" name="Username" id="Name" placeholder="Username">
         </label>
       </div>
       <div class="input-box">
         <label>
           <i class="fa-solid fa-envelope"></i>
-          <input type="text" name="Email" placeholder="Email">
+          <input type="text" name="Email" id="Email" placeholder="Email">
         </label>
       </div>
       <div class="input-box">
         <label>
           <i class="fa-solid fa-lock"></i>
-          <input type="password" name="Password" placeholder="Password">
+          <input type="password" name="Password" id="Password" placeholder="Password">
         </label>
       </div>
       <div class="input-box">

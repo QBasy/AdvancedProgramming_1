@@ -43,30 +43,6 @@ function validation(){
   }
 }
 
-async function createUser(username, email, password) {
-  try {
-    const response = await fetch('/createUser', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({username, password, email})
-    });
-
-    if (!response.ok) {
-      console.log('Error on creating new User');
-    }
-
-    return await response.json();
-  } catch (e) {
-    console.log('Problem with getting response: ', e)
-  }
-}
-let popup = document.getElementById('popup')
-function closeSlide(){
-  popup.classList.remove("open-slide")
-}
-
 function loginValidation(){
   let email = document.formFiller.Email.value;
   let emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/time/rate"
-	"gopkg.in/gomail.v2"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"net/http"
+	"net/smtp"
 	"os"
 	"os/signal"
 	"strconv"
@@ -31,6 +31,7 @@ type User struct {
 	gorm.Model
 	Name     string `json:"name"`
 	Password string `json:"password"`
+	Email    string `json:"email"`
 }
 
 type Response struct {
@@ -43,25 +44,29 @@ type Photos struct {
 	Name      string `json:"title"`
 	Author    string `json:"author"`
 	Likes     string `json:"likes"`
-	Comments  string `json:"comments"`
 	Date      string `json:"date"`
 	ImagePath string `json:"imagepath"`
 }
 
 func sendEmail(to, subject, body string) error {
-	m := gomail.NewMessage()
+	from := "flickfusionresponser@mail.ru"
 
-	m.SetHeader("From", "webresponser@mail.ru")
+	toAddr := []string{to}
 
-	m.SetHeader("To", to)
+	smtpHost := "smtp.elasticemail.com"
+	smtpPort := 2525
+	smtpUsername := "flickfusionresponser@mail.ru"
+	smtpPassword := "B5FC0A107922B933251915FE8FC4A305B8B8"
 
-	m.SetHeader("Subject", subject)
+	message := []byte("To: " + to + "\r\n" +
+		"Subject: " + subject + "\r\n" +
+		"\r\n" +
+		body + "\r\n")
 
-	m.SetBody("text/plain", body)
+	auth := smtp.PlainAuth("", smtpUsername, smtpPassword, smtpHost)
 
-	d := gomail.NewDialer("smtp.example.com", 587, "webresponser@mail.ru", "Neverplaydotaagain1")
-
-	if err := d.DialAndSend(m); err != nil {
+	err := smtp.SendMail(smtpHost+":"+strconv.Itoa(smtpPort), auth, from, toAddr, message)
+	if err != nil {
 		return err
 	}
 
@@ -261,17 +266,24 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !isUserInDatabase(user) {
+	if isUserInDatabase(user) {
 		respondWithError(w, http.StatusConflict, "User already exists")
 		return
 	}
 
 	db.Create(&user)
 
+	err = sendEmail(user.Name, "Welcome", "You're welcome")
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to send welcome email")
+		return
+	}
+
 	response := Response{
 		Status:  "success",
 		Message: "User created successfully",
 	}
+	logrus.Println("User created")
 	respondWithJSON(w, http.StatusCreated, response)
 }
 
@@ -290,9 +302,9 @@ func postLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db.First(&user, "name = ? AND password = ?", user.Name, user.Password)
-
-	if user.ID == 0 {
+	// Query the database to find the user
+	result := db.First(&user, "name = ? AND password = ?", user.Name, user.Password)
+	if result.RowsAffected == 0 {
 		respondWithError(w, http.StatusNotFound, "User not found")
 		return
 	}
@@ -348,7 +360,6 @@ func addVideoByUser(w http.ResponseWriter, r *http.Request) {
 		Name:      photo.Name,
 		Author:    photo.Author,
 		Likes:     photo.Likes,
-		Comments:  photo.Comments,
 		Date:      photo.Date,
 		ImagePath: photo.ImagePath,
 	}

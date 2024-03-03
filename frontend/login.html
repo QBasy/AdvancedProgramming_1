@@ -13,21 +13,17 @@
   <link href="css/register.css" rel="stylesheet" type="text/css">
   <script>
     function login() {
-      if (loginValidation()) {
+      if (true) {
         let name = document.getElementById("name").value;
         let password = document.getElementById("password").value;
 
-        let requestBody = {
-          name: name,
-          password: password,
-        };
 
         fetch('/postLogin', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(requestBody)
+          body: JSON.stringify({ name, password})
         })
                 .then(response => {
                   if (!response.ok) {
@@ -59,13 +55,13 @@
 <body>
 <div class="container" data-aos="fade-down" data-aos-duration="900" data-aos-delay="200">
   <div class="form-box">
-    <form action="" name="formFiller" onsubmit="return loginValidation()">
+    <form action="" name="formFiller" onsubmit="return login()">
       <h2>Sign In</h2>
       <p id="result"></p>
       <div class="input-box">
         <label>
           <i class="fa-solid fa-envelope"></i>
-          <input type="text" name="Email" id="name" placeholder="Email">
+          <input type="text" name="Name" id="name" placeholder="Name">
         </label>
       </div>
       <div class="input-box">

@@ -14,17 +14,14 @@
             const videoName = document.getElementById('videoName').value;
             const user = document.getElementById('author').value;
             const imagePath = document.getElementById('imagePath').value;
-            const videoPath = "nothing";
 
             let requestBody = {
-                "name": videoName,
+                "title": videoName,
                 "author": user,
-                "likes": "0",
+                "Likes": "0",
                 "views": "0",
-                "comments": "0",
                 "date": new Date(),
-                "imagePath": imagePath,
-                "videoPath": videoPath
+                "imagePath": imagePath
             };
 
             try {
@@ -50,14 +47,10 @@
 
         function videoValidation() {
             let videoName = document.getElementById('videoName').value;
-            let path = document.getElementById('videoPath').value;
             let author = document.getElementById('author').value;
 
             if (videoName.length < 5) {
                 document.getElementById("result").innerHTML="Video name should contain at least 5 characters*";
-                return false;
-            } else if (path.length < 5) {
-                document.getElementById("result").innerHTML="path should contain at least 5 characters*";
                 return false;
             } else if (author.length < 5) {
                 document.getElementById("result").innerHTML="author should contain at least 5 characters*";
@@ -124,7 +117,7 @@
 <!-- Video Section -->
 <div class="container px-4 px-lg-5 mt-5">
     <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
-        <form action="" name="formFiller" onsubmit="return videoValidation()">
+        <form action="" name="formFiller" onsubmit="event.preventDefault(); if (videoValidation()) { addVideo(); }">
             <h2>Add Video</h2>
             <p id="result"></p>
             <div class="input-box">
