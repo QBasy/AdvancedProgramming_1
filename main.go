@@ -91,9 +91,16 @@ func main() {
 		}
 	}()
 
-	http.Handle("./", http.FileServer(http.Dir("frontend/")))
-	logger.Println("Server Started")
-	http.HandleFunc("/", handleRequest)
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		logger.Println("Server Started")
+
+		if r.URL.Path == "/" {
+			http.FileServer(http.Dir("frontend/")).ServeHTTP(w, r)
+			return
+		}
+
+		handleRequest(w, r)
+	})
 
 	srv := &http.Server{Addr: port}
 
@@ -124,8 +131,8 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.URL.Path == "/" {
-		r.URL.Path += "index"
-		http.Redirect(w, r, "/index", 500)
+		r.URL.Path += "starter"
+		http.Redirect(w, r, "/starter", 500)
 	}
 
 	switch r.URL.Path {
@@ -165,7 +172,7 @@ func serveStarter(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
 		return
 	}
-	http.ServeFile(w, r, "starter.html")
+	http.ServeFile(w, r, "frontend/starter.html")
 }
 
 func serveIndex(w http.ResponseWriter, r *http.Request) {
