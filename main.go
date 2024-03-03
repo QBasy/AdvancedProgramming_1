@@ -5,6 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/sirupsen/logrus"
+	"golang.org/x/time/rate"
+	"gopkg.in/gomail.v2"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 	"net/http"
 	"os"
 	"os/signal"
@@ -12,11 +17,6 @@ import (
 	"strings"
 	"syscall"
 	"time"
-
-	"github.com/sirupsen/logrus"
-	"golang.org/x/time/rate"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
 var limiter = rate.NewLimiter(1, 10)
@@ -48,6 +48,26 @@ type Photos struct {
 	ImagePath string `json:"imagepath"`
 }
 
+func sendEmail(to, subject, body string) error {
+	m := gomail.NewMessage()
+
+	m.SetHeader("From", "webresponser@mail.ru")
+
+	m.SetHeader("To", to)
+
+	m.SetHeader("Subject", subject)
+
+	m.SetBody("text/plain", body)
+
+	d := gomail.NewDialer("smtp.example.com", 587, "webresponser@mail.ru", "Neverplaydotaagain1")
+
+	if err := d.DialAndSend(m); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func init() {
 	logFile, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -57,9 +77,9 @@ func init() {
 	logger.SetOutput(logFile)
 	logger.SetFormatter(&logrus.JSONFormatter{})
 
-	dsn := "host=localhost port=5432 user=postgres password=japierdole dbname=advanced sslmode=disable"
+	const dbURL = "postgres://qbasy:ZDDwUSlj2L6TPRjXMsW8Y3gS2uPRNEkJ@dpg-cni5e2n79t8c73bprang-a.frankfurt-postgres.render.com/advanced"
 	var err1 error
-	db, err1 = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err1 = gorm.Open(postgres.Open(dbURL), &gorm.Config{})
 	if err1 != nil {
 		logger.Fatalf("Error connecting to database: %v", err1)
 	}

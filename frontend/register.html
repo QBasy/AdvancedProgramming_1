@@ -12,24 +12,20 @@
   <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css">
   <link href="css/register.css" rel="stylesheet" type="text/css">
   <script>
-    function registerUser() {
+    async function registerUser() {
       if (validation()) {
         let name = document.getElementById("name").value;
         let password = document.getElementById("password").value;
+        let data;
 
-        let requestBody = {
-          name: name,
-          password: password,
-        };
-
-        fetch('/createUser', {
+        await fetch('/createUser', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(requestBody)
+          body: JSON.stringify(name, password)
         })
-                .then(response => {
+                .then(async response => {
                   if (response.redirected) {
                     window.location.href = response.url;
                   } else if (!response.ok) {
@@ -42,7 +38,7 @@
                     }
                     throw new Error('Registration failed');
                   }
-                  return response.json();
+                  data = await response.json();
                 })
                 .then(data => {
                   document.getElementById("response").innerHTML = data.message;
@@ -50,6 +46,10 @@
                 .catch(error => {
                   console.error('Error:', error);
                 });
+        console.log(data);
+        if (data.Status == "success") {
+          window.location.href = "/login";
+        }
       }
     }
   </script>
@@ -58,7 +58,7 @@
 <body>
 <div class="container" data-aos="fade-down" data-aos-duration="900" data-aos-delay="200">
   <div class="form-box">
-    <form action="" name="formFiller" onsubmit="return validation()">
+    <form action="" name="formFiller">
       <h2>Registration</h2>
       <p id="result"></p>
       <div class="input-box">

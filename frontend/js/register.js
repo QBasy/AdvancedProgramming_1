@@ -38,7 +38,6 @@ function validation(){
     return false;
   }
   else if(cpassword===password){
-    const user = createUser(username, email, password);
     popup.classList.add("open-slide");
     return false;
   }
@@ -46,7 +45,7 @@ function validation(){
 
 async function createUser(username, email, password) {
   try {
-    const response = fetch('/createUser', {
+    const response = await fetch('/createUser', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
