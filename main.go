@@ -137,7 +137,7 @@ func main() {
 		}
 		logrus.Info("Server shutdown")
 	}()
-
+	TestGetFilter()
 	logrus.Printf("Server listening on port %s...\n", port)
 	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		logrus.Fatalf("Error starting server: %v", err)
