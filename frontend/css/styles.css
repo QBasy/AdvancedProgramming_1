@@ -16,8 +16,183 @@
   font-style: normal;
 }
 
-#name {
+#siteTitle {
   font-family: "angelina", sans-serif;
   font-size: 30px;
+}
+
+.current-page-button {
+  color: #007bff;
+}
+
+
+@media (min-width: 992px){
+  .videoContent {
+    max-width: 854px;
+    width: 80%;
+  }
+}
+@media (max-width: 992px) {
+  .videoContent {
+    width: 100%;
+  }
+}
+@media (max-width: 576px) {
+  .videoContent {
+    width: 100%;
+  }
+}
+
+
+#views{
+  font-weight: bold;
+  font-style: italic;
+  font-size: 0.85rem;
+}
+
+#uploadDate {
+  font-style: italic;
+  font-size: 0.8rem;
+}
+
+#videoAvatar {
+  width: 70%;
+  border-radius: 35px;
+}
+
+#authorName {
+  font-weight: 500;
+}
+
+#subCount {
+  font-size: 0.85rem;
+  font-weight: 370;
+}
+
+.cardViews {
+  font-size: 0.9rem;
+  font-weight: 470;
+}
+
+.likeButton:hover {
+  background-color: lightgrey;
+}
+
+.no-resize {
+  resize: none;
+}
+
+@media (max-width: 767px) {
+    .card-body p {
+        font-size: 12px;
+    }
+    .card-body h5 {
+        font-size: 12px;
+    }
+}
+
+@media (min-width: 992px) {
+  #profileAvatar {
+    max-width: 200px;
+    height: auto;
+    border-radius: 100px;
+  }
+}
+
+@media (max-width: 992px) {
+  #profileAvatar {
+    max-width: 150px;
+    height: auto;
+    border-radius: 100px;
+  }
+}
+
+.avatar {
+  width: 70px;
+}
+
+#username {
+  font-weight: bold;
+  color: black;
+  font-family: "Times New Roman", sans-serif;
+}
+
+#subButton {
+  background-color: #212529;
+  color: #ffffff;
+  border: none;
+  border-radius: 20px;
+  transition: transform 0.15s ease;
+}
+#subButton:active {
+  transform: scale(0.95);
+}
+#subButton:hover{
+  background-color: #212535;
+}
+
+#searchButton {
+  background-color: white;
+  color: black;
+  border: none;
+  border-radius: 10px;
+  transition: transform 0.1s ease;
+}
+#searchButton:active {
+  transform: scale(0.95);
+}
+#searchButton:hover {
+  background-color: lightgrey;
+}
+
+.rounded-sub-navbar {
+  border-radius: 30px;
+}
+
+.contentInfo {
+  border-radius: 30px;
+}
+
+.card-rounded {
+  border: none;
+}
+
+.card-img-rounded {
+  border-radius: 15px;
+}
+
+#videoPlaceholder.video-js {
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+#chatBox {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  background-color: #ffffff;
+  border: 1px solid #cccccc;
+  border-radius: 5px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+  padding: 10px;
+}
+
+.message {
+  border-radius: 20px;
+  padding: 10px 15px;
+  margin-bottom: 10px;
+  max-width: 70%;
+  word-wrap: break-word;
+}
+
+.sent {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.received {
+  background-color: #f8f9fa;
 }
 

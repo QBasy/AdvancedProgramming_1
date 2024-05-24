@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>FlickFusion</title>
+  <link rel="icon" type="image/x-icon" href="assets/favicon-32x32.png">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://kit.fontawesome.com/f5c7d6a886.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css">
+  <link href="css/style.css" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <div class="container px-4 px-lg-5"><a class="navbar-brand" href="index.html" id="siteTitle">FlickFusion</a><button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+    <div
+      class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+        <li class="nav-item"><a class="nav-link active" aria-current="page" href="index.html">Home</a></li>
+        <li class="nav-item dropdown"><a class="nav-link dropdown-toggle" id="navbarDropdownWatch" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Watch</a>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdownWatch">
+            <li><a class="dropdown-item" href="#">Movies</a></li>
+            <li><a class="dropdown-item" href="#">Series</a></li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            <li><a class="dropdown-item" href="#">Videos</a></li>
+            <li><a class="dropdown-item" href="#">Memes</a></li>
+          </ul>
+        </li>
+        <li class="nav-item"><a class="nav-link" href="feedback.html">Feedback</a></li>
+      </ul>
+
+      <div class="dropdown">
+        <form class="d-flex">
+          <button class="btn btn-outline-dark" type="button" id="accountDropdownBtn">
+            <i class="fa-solid fa-user"></i> Account
+          </button>
+        </form>
+        <ul class="dropdown-menu" id="accountDropdownMenu">
+          <li><a class="dropdown-item" href="#">Add Content</a></li>
+          <li><a class="dropdown-item" href="#">Stats</a></li>
+          <li><a class="dropdown-item" href="#">Bookmarks</a></li>
+          <li><a class="dropdown-item" href="#">Edit Profile</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="#">Log Out</a></li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</nav>
+
+<!-- Header -->
+<header class="bg-dark py-5">
+  <div class="container px-4 px-lg-5 my-5">
+    <div class="text-center text-white">
+      <h1 class="display-4 fw-bolder" data-aos="fade-right" data-aos-duration="900" data-aos-delay="200">Watch with pleasure</h1>
+      <p class="lead fw-normal text-50 mb-0" data-aos="fade-left" data-aos-duration="900" data-aos-delay="400">In this Comfortable Space</p>
+    </div>
+  </div>
+</header>
+
+<!-- Video Section -->
+<section class="py-5">
+  <div class="container px-4 px-lg-5 mt-5">
+    <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center videoRow">
+
+    </div>
+  </div>
+
+  <!-- Chat Button -->
+  <div id="chatButton" class="position-fixed bottom-0 end-0 p-3">
+    <button id="toggleChatBtn" class="btn btn-primary rounded-circle"><i class="fas fa-comment"></i></button>
+  </div>
+
+  <!-- Chat Box -->
+  <div id="askBox" class="position-fixed bottom-0 end-0 p-3" style="display: none;">
+    <div class="card">
+      <div class="card-body">
+        <h4>Do you want to connect support?</h4>
+        <div class="supportButtons pt-4">
+          <button id="confirmHelpBtn" class="btn btn-primary">Yes, connect me to a support team</button>
+          <button id="cancelHelpBtn" class="btn btn-secondary">No, thanks</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat Box -->
+  <div id="chatBox" class="position-fixed bottom-0 end-0 p-3" style="display: none;">
+    <div class="card">
+      <div class="card-header">
+        <h4 class="card-title">Support</h4>
+      </div>
+      <div class="card-body" id="chatMessages">
+        <!-- Messages will be displayed here -->
+      </div>
+      <div class="card-footer">
+        <div class="input-group">
+          <input type="text" id="chatInput" class="form-control" placeholder="Type your message...">
+          <button id="sendMessageBtn" class="btn btn-primary">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+</section>
+<!-- Footer-->
+<footer class="py-5 bg-dark">
+  <div class="container">
+    <p class="m-0 text-center text-white">Copyright &copy; FlickFusion 2023</p>
+  </div>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/scripts.js"></script>
+<script src="js/cardRemaster.js"></script>
+<script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script>
+  AOS.init();
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Toggle chat box visibility when the chat button is clicked
+    document.getElementById('toggleChatBtn').addEventListener('click', function() {
+      var chatBox = document.getElementById('askBox');
+      if (chatBox.style.display === 'none') {
+        chatBox.style.display = 'block';
+      } else {
+        chatBox.style.display = 'none';
+      }
+    });
+
+    // Handle "Yes, connect me to a support team" button click
+    document.getElementById('confirmHelpBtn').addEventListener('click', function() {
+      // Here you can implement the action to connect to the support team
+      console.log('Connecting to support team...');
+      // Optionally, hide the chat box after confirming
+      document.getElementById('askBox').style.display = 'none';
+
+      document.getElementById('chatBox').style.display = 'block';
+    });
+
+    // Handle "No, thanks" button click
+    document.getElementById('cancelHelpBtn').addEventListener('click', function() {
+      // Optionally, hide the chat box if user declines help
+      document.getElementById('askBox').style.display = 'none';
+    });
+  });
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Handle send message button click
+    document.getElementById('sendMessageBtn').addEventListener('click', function() {
+      var message = document.getElementById('chatInput').value;
+      if (message.trim() !== '') {
+        // Create a new message element
+        var messageElement = document.createElement('div');
+        messageElement.textContent = message;
+
+        // Add appropriate class for message alignment
+        messageElement.classList.add('message', 'sent');
+
+        // Append the message element to the chatMessages container
+        document.getElementById('chatMessages').appendChild(messageElement);
+
+        // Clear the input field after sending the message
+        document.getElementById('chatInput').value = '';
+      }
+    });
+  });
+</script>
+</body>
+
+</html>

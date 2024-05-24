@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="img/favicon-32x32.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://kit.fontawesome.com/f5c7d6a886.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css">
+    <link href="css/stylesss.css" rel="stylesheet" type="text/css">
+    <title>Admin Panel</title>
+    <style>
+        .chat-messages {
+            max-height: 300px;
+            overflow-y: scroll;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .message {
+            margin-bottom: 5px;
+            padding: 5px;
+            border-radius: 5px;
+        }
+
+        .received {
+            background-color: #f1f1f1;
+        }
+
+        .sent {
+            background-color: #d1ffd1;
+            text-align: right;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>Admin Panel</h1>
+
+<div id="adminChatBox" style="display: none; width: 300px; position: fixed; bottom: 20px; right: 20px;">
+    <div id="adminChatMessages" class="chat-messages"></div>
+    <label for="adminChatInput"></label><input type="text" id="adminChatInput" class="form-control"
+                                               placeholder="Type your message...">
+    <button id="adminSendMessageBtn" class="btn btn-primary mt-2">Send</button>
+</div>
+<script>
+    let json;
+
+    function bodyToJSON(data) {
+        json = data;
+    }
+
+    async function saveMessage() {
+        fetch('/send-message', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(json)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to send message');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Message sent successfully:', data);
+            })
+            .catch(error => {
+                console.error('Error sending message:', error.message);
+            });
+
+        document.getElementById('chatInput').value = '';
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const isAdmin = true;
+
+        if (isAdmin) {
+            document.getElementById('adminChatBox').style.display = 'block';
+            initializeAdminChat();
+        } else {
+            alert('You are not authorized to access this page.');
+        }
+
+        function initializeAdminChat() {
+            const adminSocket = new WebSocket('ws://localhost:8888/ws');
+
+            adminSocket.addEventListener('message', function (event) {
+                const messageData = JSON.parse(event.data);
+                console.log('Message from server:', messageData);
+                if (messageData.username !== 'admin') {
+                    appendAdminMessage(messageData.message, 'received');
+                }
+            });
+
+            document.getElementById('adminSendMessageBtn').addEventListener('click', function () {
+                let message = document.getElementById('adminChatInput').value;
+                if (message.trim() !== '') {
+                    const messageObj = { username: "admin", message: message };
+                    console.log(messageObj);
+
+                    json = messageObj;
+                    saveMessage();
+                    adminSocket.send(JSON.stringify(messageObj));
+
+                    appendAdminMessage(message, 'sent');
+                    document.getElementById('adminChatInput').value = '';
+                }
+            });
+        }
+
+        function appendAdminMessage(message, type) {
+            let messageElement = document.createElement('div');
+            messageElement.textContent = message;
+            messageElement.classList.add('message', type);
+            document.getElementById('adminChatMessages').appendChild(messageElement);
+            document.getElementById('adminChatInput').value = '';
+            document.getElementById('adminChatMessages').scrollTop = document.getElementById('adminChatMessages').scrollHeight;
+        }
+
+    });
+</script>
+
+</body>
+
+</html>
